@@ -6,10 +6,9 @@ const RegisterPage = () => {
     const [registration, setRegistration] = useState({
         fullname: "",
         email: "",
-        phoneNumber: "",
-        dob: "",
         password: "",
-        role: "USER" // Giá trị mặc định, không cần người dùng nhập
+        phone: "",
+        dob: ""
     });
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
@@ -26,26 +25,64 @@ const RegisterPage = () => {
         setRegistration({ ...registration, [e.target.name]: e.target.value });
     };
 
+    const handleFullNameBlur = (e) => {
+        const fullName = e.target.value.trim().replace(/\s+/g, ' ');
+        const normalizedFullName = fullName
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+        setRegistration({ ...registration, fullname: normalizedFullName });
+    };
+
     const handleRegistration = async (e) => {
         e.preventDefault();
-        // Kiểm tra các trường không được để trống
-        if (!registration.fullname || !registration.email || !registration.phoneNumber || !registration.dob || !registration.password) {
+
+        // 1. Kiểm tra các trường không được để trống
+        if (!registration.fullname || !registration.email || !registration.phone || !registration.dob || !registration.password) {
             setErrorMessage("Please fill in all fields.");
             return;
         }
+
+        // 2. Kiểm tra định dạng email
+        const emailRegex = /^[^\s@]+@gmail\.com$/;
+        if (!emailRegex.test(registration.email)) {
+            setErrorMessage("Email must be a valid @gmail.com address.");
+            return;
+        }
+
+        // 3. Kiểm tra mật khẩu
+        const passwordRegex = /[a-zA-Z]/;
+        if (!passwordRegex.test(registration.password)) {
+            setErrorMessage("Password must contain at least one letter.");
+            return;
+        }
+
+        // 4. Kiểm tra ngày sinh
+        const dob = new Date(registration.dob);
+        const today = new Date();
+        const hundredYearsAgo = new Date();
+        hundredYearsAgo.setFullYear(today.getFullYear() - 100);
+
+        if (dob > today) {
+            setErrorMessage("Date of birth cannot be in the future.");
+            return;
+        }
+        if (dob < hundredYearsAgo) {
+            setErrorMessage("You must be less than 100 years old to register.");
+            return;
+        }
+
         try {
             const result = await registerUser(registration);
-            // Backend trả về một object Response, ta nên lấy message từ đó
             setSuccessMessage(result.message || "Registration successful!");
             setErrorMessage("");
             // Xóa form sau khi đăng ký thành công
             setRegistration({
                 fullname: "",
                 email: "",
-                phoneNumber: "",
+                phone: "",
                 dob: "",
-                password: "",
-                role: "USER"
+                password: ""
             });
             // Tùy chọn: Chuyển hướng đến trang đăng nhập sau một khoảng thời gian
             setTimeout(() => {
@@ -53,7 +90,11 @@ const RegisterPage = () => {
             }, 2000);
         } catch (error) {
             setSuccessMessage("");
-            setErrorMessage(`Registration Error: ${error.message}`);
+            if (error.response && error.response.data && error.response.data.message) {
+                setErrorMessage(error.response.data.message);
+            } else {
+                setErrorMessage(`Registration Error: ${error.message}`);
+            }
         }
     };
 
@@ -69,24 +110,24 @@ const RegisterPage = () => {
                 <form onSubmit={handleRegistration}>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                            <input type="text" name="fullname" value={registration.fullname} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" />
+                            <label className="block text-sm font-medium text-gray-700">Full Name <span className="text-red-500">*</span></label>
+                            <input type="text" name="fullname" value={registration.fullname} onChange={handleRegistrationChange} onBlur={handleFullNameBlur} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                            <input type="tel" name="phoneNumber" value={registration.phoneNumber} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" />
+                            <label className="block text-sm font-medium text-gray-700">Phone Number <span className="text-red-500">*</span></label>
+                            <input type="tel" name="phone" value={registration.phone} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
-                            <input type="date" name="dob" value={registration.dob} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" />
+                            <label className="block text-sm font-medium text-gray-700">Date of Birth <span className="text-red-500">*</span></label>
+                            <input type="date" name="dob" value={registration.dob} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" name="email" value={registration.email} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" />
+                            <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
+                            <input type="email" name="email" value={registration.email} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Password</label>
-                            <input type="password" name="password" value={registration.password} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" />
+                            <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
+                            <input type="password" name="password" value={registration.password} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                     </div>
                     <button type="submit" className="w-full px-4 py-2 mt-6 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">

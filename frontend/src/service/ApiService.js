@@ -1,7 +1,26 @@
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:9090";
+
+// Instance cho các API cần xác thực
 export const api = axios.create({
-    baseURL: "http://localhost:9090"
+    baseURL: BASE_URL,
+});
+
+// Instance cho các API không cần xác thực (đăng nhập, đăng ký)
+const authApi = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:9090",
+});
+
+// Interceptor chỉ áp dụng cho `api`, không áp dụng cho `authApi`
+api.interceptors.request.use(config => {
+    const token = localStorage.getItem("token");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, error => {
+    return Promise.reject(error);
 });
 
 export const getHeader = () => {
@@ -14,17 +33,22 @@ export const getHeader = () => {
 
 export async function registerUser(registrationData) {
     try {
-        // Đổi tên 'fullname' thành 'fName' để khớp với backend
+        // Transform frontend data to match backend RegistrationRequest format
         const payload = {
-            ...registrationData,
-            fName: registrationData.fullname,
+            fullname: registrationData.fullname,
+            email: registrationData.email,
+            phoneNumber: registrationData.phone, // Map phone -> phoneNumber
+            dob: registrationData.dob,
+            password: registrationData.password,
+            role: "CUSTOMER" // Default role for new users
         };
-        delete payload.fullname;
-        const response = await api.post("/api/v1/auth/register", payload);
+        const response = await authApi.post("/api/v1/auth/register", payload, {
+            headers: { 'Content-Type': 'application/json' }
+        });
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {
-            const errorMessage = typeof error.response.data === 'string' ? error.response.data : error.response.data.message;
+            const errorMessage = typeof error.response.data === 'string' ? error.response.data : (error.response.data.message || JSON.stringify(error.response.data));
             throw new Error(errorMessage || "An unexpected error occurred during registration.");
         } else {
             throw new Error(`Error registering user: ${error.message || "An unexpected error occurred."}`);
@@ -34,10 +58,10 @@ export async function registerUser(registrationData) {
 
 export async function loginUser(loginData) {
     try {
-        const response = await api.post("/api/v1/auth/login", loginData);
+    const response = await authApi.post("/api/v1/auth/login", loginData);
         if (response.data.token) {
             localStorage.setItem("token", response.data.token);
-            localStorage.setItem("userRole", response.data.role); // Sửa từ roles thành role
+            localStorage.setItem("userRole", response.data.role); 
         }
         return response.data;
     } catch (error) {
@@ -71,7 +95,7 @@ export function isUser() {
 
 export async function getUserProfile() {
     try {
-        const response = await api.get("/api/v1/users/profile", {
+        const response = await api.get("/api/v1/users/account", {
             headers: getHeader()
         });
         return response.data;
@@ -82,12 +106,13 @@ export async function getUserProfile() {
 
 export async function deleteUser(userId) {
     try {
-        const response = await api.delete(`/api/v1/users/delete/${userId}`, {
+        const response = await api.delete(`/api/v1/users/delete`, {
             headers: getHeader()
         });
         return response.data;
     } catch (error) {
-        return error.response?.data?.message || "Error deleting user";
+        const errorMessage = error.response?.data?.message || "Error deleting user";
+        throw new Error(errorMessage);
     }
 }
 

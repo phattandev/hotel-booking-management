@@ -12,7 +12,7 @@ function App() {
     <BrowserRouter>
       <NavBar />
       {/* Add padding-top to prevent content from being hidden behind the fixed navbar */}
-      <div className="App pt-20">
+      <div className="App pt[64px]">
         <Routes>
             {/* Route for homepage and login */}
             <Route exact path="/" element={<LoginPage />} />

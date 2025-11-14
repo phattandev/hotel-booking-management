@@ -1,4 +1,5 @@
 import React from 'react';
+import Footer from '../common/Footer';
 
 const HomePage = () => {
   return (
@@ -60,8 +61,9 @@ const HomePage = () => {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };
 
-export default HomePage
+export default HomePage;
