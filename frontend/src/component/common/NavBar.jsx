@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { isAuthenticated, isAdmin, isUser, logout } from '../../service/ApiService';
+import authEventEmitter from '../../utils/authEventEmitter';
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,11 +31,15 @@ const NavBar = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Cập nhật trạng thái đăng nhập khi component được render lại (ví dụ sau khi điều hướng)
+  // Subscribe to auth changes (login/logout) to update navbar in real-time
   useEffect(() => {
-    setIsLoggedIn(isAuthenticated());
-    setUserIsAdmin(isAdmin());
-  }, [navigate]);
+    const unsubscribe = authEventEmitter.subscribe(() => {
+      console.log('[NavBar] Auth event triggered - updating state');
+      setIsLoggedIn(isAuthenticated());
+      setUserIsAdmin(isAdmin());
+    });
+    return unsubscribe;
+  }, []);
   
   // Hàm để xác định class cho NavLink, thêm hiệu ứng active
   const navLinkClass = ({ isActive }) =>

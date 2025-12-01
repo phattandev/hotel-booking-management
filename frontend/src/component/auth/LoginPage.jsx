@@ -29,10 +29,10 @@ const LoginPage = () => {
         }
         try {
             const userData = await loginUser(login);
-            const role = userData.role;
-            alert(`Chào mừng ${role === 'ADMIN' ? 'admin' : 'người dùng'} "${login.email}"!`);
-            // Điều hướng đến trang admin nếu là admin, ngược lại về trang chủ
-            if (role === "ADMIN") {
+            const role = userData.role ? userData.role.toUpperCase() : '';
+            
+            // Redirect based on role - admin goes to admin dashboard, others to home
+            if (role === 'ADMIN') {
                 navigate("/admin");
             } else {
                 navigate("/home");

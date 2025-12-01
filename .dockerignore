@@ -1,0 +1,14 @@
+# Bỏ qua thư mục node_modules
+node_modules
+
+# Bỏ qua file build (nếu có ở local)
+dist
+frontend/dist
+
+# Bỏ qua các file log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Bỏ qua file .env (nếu có)
+.env
