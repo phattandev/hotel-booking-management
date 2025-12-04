@@ -384,6 +384,19 @@ export async function getBookingByConfirmationCode(confirmationCode) {
 	}
 }
 
+/* This function cancels a booking with a reason */
+export async function cancelBooking(bookingId, reason) {
+	try {
+		const result = await api.delete(`/api/v1/bookings/cancel/${bookingId}`, {
+			data: { reason },
+			headers: getHeader()
+		})
+		return result.data
+	} catch (error) {
+		throw new Error(error.response?.data?.message || `Error cancelling booking : ${error.message}`)
+	}
+}
+
 // ================= Amenities (Hotel & Room) =================
 // Note: backend endpoints may still be under development. These helpers
 // use the expected REST routes and include auth headers where appropriate.

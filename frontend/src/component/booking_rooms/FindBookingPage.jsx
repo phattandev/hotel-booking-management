@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../common/Footer';
-import { getBookingByConfirmationCode, getUserBookings, isAuthenticated } from '../../service/ApiService';
+import { getBookingByConfirmationCode, getUserBookings, isAuthenticated, cancelBooking } from '../../service/ApiService';
 
 const FindBookingPage = () => {
 	const navigate = useNavigate();
@@ -14,6 +14,14 @@ const FindBookingPage = () => {
 	const [error, setError] = useState(null);
 	const [searchStatus, setSearchStatus] = useState(''); // 'success', 'not-found', ''
 	const [hasSearched, setHasSearched] = useState(false);
+	
+	// Cancel booking states
+	const [showCancelModal, setShowCancelModal] = useState(false);
+	const [cancelReason, setCancelReason] = useState('');
+	const [bookingToCancelId, setBookingToCancelId] = useState(null);
+	const [bookingToCancelRef, setBookingToCancelRef] = useState(null);
+	const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+	const [cancelling, setCancelling] = useState(false);
 
 	// Check authentication on mount
 	useEffect(() => {
@@ -112,8 +120,63 @@ const FindBookingPage = () => {
 		setSelectedBooking(null);
 	};
 
-	// Handle cancel booking (placeholder)
+	// Handle cancel booking - open reason form
 	const handleCancelBooking = (booking) => {
+		setBookingToCancelId(booking.id);
+		setBookingToCancelRef(booking.bookingReference);
+		setCancelReason('');
+		setShowCancelModal(true);
+	};
+
+	// Handle reason change
+	const handleCancelReasonChange = (e) => {
+		setCancelReason(e.target.value);
+	};
+
+	// Handle confirm cancel - show confirmation dialog
+	const handleConfirmCancel = () => {
+		if (!cancelReason.trim()) {
+			alert('Vui lòng nhập lý do hủy phòng');
+			return;
+		}
+		setShowConfirmCancel(true);
+	};
+
+	// Handle cancel confirmation - call API
+	const handleCancelConfirmation = async () => {
+		console.log('[DEBUG] handleCancelConfirmation - bookingToCancelId:', bookingToCancelId, 'cancelReason:', cancelReason);
+		if (!bookingToCancelId) {
+			alert('Lỗi: Không tìm thấy ID đặt phòng. Vui lòng thử lại.');
+			return;
+		}
+		setCancelling(true);
+		try {
+			await cancelBooking(bookingToCancelId, cancelReason);
+			// Update bookings list
+			const updatedBookings = allBookings.map(b => 
+				b.id === bookingToCancelId ? { ...b, status: 'CANCELLED', cancelReason } : b
+			);
+			setAllBookings(updatedBookings);
+			setFilteredBookings(updatedBookings.filter(b => 
+				!searchQuery || b.bookingReference.includes(searchQuery)
+			));
+			// Close modals and show success
+			setShowConfirmCancel(false);
+			setShowCancelModal(false);
+			setSelectedBooking(null);
+			alert(`Hủy đặt phòng ${bookingToCancelRef} thành công`);
+		} catch (err) {
+			alert(`Lỗi hủy đặt phòng: ${err.message}`);
+		} finally {
+			setCancelling(false);
+			setCancelReason('');
+			setBookingToCancelId(null);
+			setBookingToCancelRef(null);
+		}
+	};
+
+	// Handle cancel booking (placeholder)
+	const handleCancelBookingOld = (booking) => {
 		// TODO: Implement cancel booking functionality
 		alert(`Cancel booking functionality coming soon for: ${booking.bookingReference}`);
 	};
@@ -319,6 +382,14 @@ const FindBookingPage = () => {
 									</div>
 								)}
 
+								{/* Cancel Reason (for CANCELLED bookings) */}
+								{selectedBooking.status === 'CANCELLED' && selectedBooking.cancelReason && (
+									<div className="border-b pb-4">
+										<h3 className="text-lg font-bold mb-2">Lý do hủy</h3>
+										<p className="text-sm text-gray-700 bg-red-50 p-3 rounded">{selectedBooking.cancelReason}</p>
+									</div>
+								)}
+
 								{/* Price */}
 								<div className="bg-blue-50 p-3 rounded">
 									<div className="flex justify-between text-sm">
@@ -358,7 +429,84 @@ const FindBookingPage = () => {
 					</div>
 				)}
 
-				{/* Bookings List */}
+				{/* Cancel Reason Form Modal */}
+				{showCancelModal && (
+					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+						<div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+							<div className="p-6 border-b">
+								<h2 className="text-xl font-bold">Hủy đặt phòng</h2>
+								<p className="text-gray-600 text-sm mt-1">Vui lòng nhập lý do hủy đặt phòng</p>
+							</div>
+
+							<div className="p-6 space-y-4">
+								<textarea
+									value={cancelReason}
+									onChange={handleCancelReasonChange}
+									placeholder="Nhập lý do hủy..."
+									className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+									rows="4"
+								/>
+							</div>
+
+							<div className="p-6 border-t bg-gray-50 flex gap-3">
+								<button
+									onClick={() => {
+										setShowCancelModal(false);
+										setCancelReason('');
+										setBookingToCancelId(null);
+										setBookingToCancelRef(null);
+									}}
+									className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors font-semibold text-sm"
+								>
+									Hủy
+								</button>
+								<button
+									onClick={handleConfirmCancel}
+									disabled={!cancelReason.trim()}
+									className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									Xác nhận
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
+
+				{/* Confirmation Dialog Modal */}
+				{showConfirmCancel && (
+					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+						<div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+							<div className="p-6 border-b">
+								<h2 className="text-xl font-bold text-red-600">Xác nhận hủy đặt phòng</h2>
+							</div>
+
+							<div className="p-6">
+								<p className="text-gray-700">Bạn có chắc chắn muốn hủy đặt phòng <span className="font-semibold">{bookingToCancelRef}</span> không?</p>
+								<p className="text-gray-600 text-sm mt-3">Lý do: <span className="font-semibold">{cancelReason}</span></p>
+								<p className="text-red-600 text-sm font-semibold mt-4">⚠️ Thao tác này không thể hoàn tác</p>
+							</div>
+
+							<div className="p-6 border-t bg-gray-50 flex gap-3">
+								<button
+									onClick={() => {
+										setShowConfirmCancel(false);
+									}}
+									disabled={cancelling}
+									className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors font-semibold text-sm disabled:opacity-50"
+								>
+									Không, giữ lại
+								</button>
+								<button
+									onClick={handleCancelConfirmation}
+									disabled={cancelling}
+									className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									{cancelling ? 'Đang xử lý...' : 'Có, hủy đặt phòng'}
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
 				{!initialLoading && filteredBookings.length > 0 ? (
 					<div className="grid gap-4">
 						{filteredBookings.map((booking) => (
