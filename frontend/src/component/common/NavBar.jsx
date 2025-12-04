@@ -79,21 +79,26 @@ const NavBar = () => {
         {/* Trên màn hình lớn: hiển thị ngang. Trên mobile: ẩn/hiện theo trạng thái 'isOpen' */}
         <div className={`absolute md:relative top-full left-0 w-full md:w-auto bg-green-800 md:bg-transparent transition-all duration-300 ease-in-out ${isOpen ? 'block' : 'hidden'} md:flex`}>
           <ul className="flex flex-col md:flex-row md:space-x-2 p-4 md:p-0">
-            <li><NavLink to="/home" className={navLinkClass} onClick={handleLinkClick}>Home</NavLink></li>
-            <li><NavLink to="/rooms" className={navLinkClass} onClick={handleLinkClick}>Rooms</NavLink></li>
+            <li><NavLink to="/home" className={navLinkClass} onClick={handleLinkClick}>Trang chủ</NavLink></li>
+            <li><NavLink to="/hotels" className={navLinkClass} onClick={handleLinkClick}>Khách sạn</NavLink></li>
             
             {isLoggedIn && (
-              <li><NavLink to="/find-booking" className={navLinkClass} onClick={handleLinkClick}>Find Booking</NavLink></li>
+              <>
+                <li><NavLink to="/find-booking" className={navLinkClass} onClick={handleLinkClick}>Lịch sử đặt phòng</NavLink></li>
+                {!userIsAdmin && (
+                  <li><NavLink to="/profile" className={navLinkClass} onClick={handleLinkClick}>Thông tin cá nhân</NavLink></li>
+                )}
+              </>
             )}
 
             {userIsAdmin && (
-              <li><NavLink to="/admin" className={navLinkClass} onClick={handleLinkClick}>Admin</NavLink></li>
+              <li><NavLink to="/admin" className={navLinkClass} onClick={handleLinkClick}>Quản trị</NavLink></li>
             )}
 
             {!isLoggedIn ? (
               <>
-                <li><NavLink to="/login" className={navLinkClass} onClick={handleLinkClick}>Login</NavLink></li>
-                <li><NavLink to="/register" className={navLinkClass} onClick={handleLinkClick}>Register</NavLink></li>
+                <li><NavLink to="/login" className={navLinkClass} onClick={handleLinkClick}>Đăng nhập</NavLink></li>
+                <li><NavLink to="/register" className={navLinkClass} onClick={handleLinkClick}>Đăng ký</NavLink></li>
               </>
             ) : (
               <li><button onClick={handleLogout} className="block py-2 px-4 text-white hover:text-green-300 transition-colors duration-200 w-full text-left">Logout</button></li>

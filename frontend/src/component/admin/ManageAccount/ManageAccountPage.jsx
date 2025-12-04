@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
-import Footer from '../common/Footer';
-import { getAllUsers, lockUser, unlockUser } from '../../service/ApiService';
+
+import { getAllUsers, lockUser, unlockUser } from '../../../service/ApiService';
 
 const ManageAccountPage = () => {
   const [users, setUsers] = useState([]);
@@ -38,22 +37,22 @@ const ManageAccountPage = () => {
     try {
       if (isLocked) {
         await unlockUser(userId);
-        setMessage('User unlocked successfully.');
+        setMessage('Tài khoản đã mở khóa thành công.');
       } else {
         await lockUser(userId);
-        setMessage('User locked successfully.');
+        setMessage('Tài khoản đã bị khóa thành công.');
       }
       fetchUsers();
     } catch (err) {
-      setError(err.message || 'Error updating user status');
+      setError(err.message || 'Lỗi cập nhật trạng thái tài khoản');
     }
     setActionLoading(false);
   };
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-2 mt-20">Manage Accounts</h1>
-      <p className="text-gray-600 mb-4">View and manage all user accounts in the system.</p>
+      <h1 className="text-2xl font-bold mb-2 mt-20">Quản lý tài khoản</h1>
+      <p className="text-gray-600 mb-4">Xem và quản lý tất cả các tài khoản người dùng trong hệ thống.</p>
 
       {message && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">
@@ -66,26 +65,23 @@ const ManageAccountPage = () => {
         </div>
       )}
 
-
-
-
       {/* Users List */}
       <div className="bg-white rounded shadow overflow-hidden">
         {loading ? (
-          <div className="p-4">Loading...</div>
+          <div className="p-4">Đang tải...</div>
         ) : users.length === 0 ? (
-          <div className="p-4 text-gray-600">No users found.</div>
+          <div className="p-4 text-gray-600">Không tìm thấy người dùng nào.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-100 border-b">
                 <tr>
-                  <th className="px-4 py-3 text-left">User ID</th>
-                  <th className="px-4 py-3 text-left">Full Name</th>
+                  <th className="px-4 py-3 text-left">ID tài khoản</th>
+                  <th className="px-4 py-3 text-left">Họ tên</th>
                   <th className="px-4 py-3 text-left">Email</th>
-                  <th className="px-4 py-3 text-left">Phone</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Actions</th>
+                  <th className="px-4 py-3 text-left">Điện thoại</th>
+                  <th className="px-4 py-3 text-left">Trạng thái</th>
+                  <th className="px-4 py-3 text-left">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -106,7 +102,7 @@ const ManageAccountPage = () => {
                             ? 'bg-red-100 text-red-800'
                             : 'bg-green-100 text-green-800'
                         }`}>
-                          {isLocked ? 'Locked' : 'Active'}
+                          {isLocked ? 'Bị khóa' : 'Hoạt động'}
                         </span>
                       </td>
                       <td className="px-4 py-3 space-x-2 flex flex-wrap gap-2">
@@ -115,7 +111,7 @@ const ManageAccountPage = () => {
                           className={`px-2 py-1 text-xs rounded text-white ${isLocked ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600'}`}
                           disabled={actionLoading}
                         >
-                          {isLocked ? 'Unlock' : 'Lock'}
+                          {isLocked ? 'Mở khóa' : 'Khóa'}
                         </button>
                       </td>
                     </tr>

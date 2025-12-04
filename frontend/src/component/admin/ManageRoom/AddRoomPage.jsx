@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Footer from '../common/Footer';
-import { addRoom } from '../../service/ApiService';
+import { addRoom, getAllAmenities } from '../../../service/ApiService';
 
 const AddRoomPage = () => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
   const [form, setForm] = useState({
+    hotelId: '',
     roomNumber: '',
     name: '',
     description: '',
@@ -16,16 +20,14 @@ const AddRoomPage = () => {
     photo: null
   });
   const [amenityInput, setAmenityInput] = useState('');
+  const [amenityOptions, setAmenityOptions] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedAmenity, setSelectedAmenity] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
@@ -40,13 +42,54 @@ const AddRoomPage = () => {
     }
   };
 
+  // Fetch amenities for combobox on mount
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const res = await getAllAmenities();
+        // res may be { status, message, data: [...] } or an array
+        const list = res?.data ?? res ?? [];
+        if (mounted) setAmenityOptions(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.error('[AddRoomPage] Error loading amenities:', err);
+      }
+    };
+    load();
+    return () => { mounted = false };
+  }, []);
+
+  // ref to close dropdown when clicking outside
+  const comboRef = useRef();
+  useEffect(() => {
+    const onDoc = (e) => {
+      if (comboRef.current && !comboRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', onDoc);
+    return () => document.removeEventListener('click', onDoc);
+  }, []);
+
   const handleAddAmenity = () => {
-    if (amenityInput.trim()) {
-      setForm({
-        ...form,
-        amenities: [...form.amenities, amenityInput.trim()]
-      });
+    // If an option is selected from dropdown, add the object
+    if (selectedAmenity && selectedAmenity.id != null) {
+      // avoid duplicates by id
+      const exists = form.amenities.some(a => a && a.id === selectedAmenity.id);
+      if (!exists) {
+        setForm({ ...form, amenities: [...form.amenities, selectedAmenity] });
+      }
+      setSelectedAmenity(null);
       setAmenityInput('');
+      setDropdownOpen(false);
+      return;
+    }
+
+    // fallback: add as free-text string (keeps previous behavior)
+    if (amenityInput.trim()) {
+      setForm({ ...form, amenities: [...form.amenities, amenityInput.trim()] });
+      setAmenityInput('');
+      setDropdownOpen(false);
     }
   };
 
@@ -102,6 +145,7 @@ const AddRoomPage = () => {
     setLoading(true);
     try {
       const roomData = {
+        hotelId: form.hotelId,
         roomNumber: form.roomNumber,
         type: form.type, // String "SINGLE", "DOUBLE", etc.
         price: form.price,
@@ -132,7 +176,18 @@ const AddRoomPage = () => {
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">{success}</div>}
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4 max-w-2xl">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Hotel ID *</label>
+            <input 
+              type="number"
+              name="hotelId"
+              value={form.hotelId}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              placeholder="e.g. 1"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium mb-1">Room Number *</label>
             <input 
@@ -178,10 +233,10 @@ const AddRoomPage = () => {
               onChange={handleChange} 
               className="w-full p-2 border rounded"
             >
-              <option>SINGLE</option>
-              <option>DOUBLE</option>
-              <option>SUITE</option>
-              <option>FAMILY</option>
+                <option>SINGLE</option>
+                <option>DOUBLE</option>
+                <option>SUIT</option>
+                <option>TRIPLE</option>
             </select>
           </div>
           <div>
@@ -237,42 +292,66 @@ const AddRoomPage = () => {
 
         <div>
           <label className="block text-sm font-medium mb-1">Amenities (Tiện nghi)</label>
-          <div className="flex gap-2 mb-3">
-            <input 
-              type="text"
-              value={amenityInput}
-              onChange={(e) => setAmenityInput(e.target.value)}
-              onKeyPress={handleAmenityKeyPress}
-              placeholder="e.g. WiFi, TV, Air Conditioner"
-              className="flex-1 p-2 border rounded"
-            />
-            <button
-              type="button"
-              onClick={handleAddAmenity}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Add
-            </button>
+          <div className="relative" ref={comboRef}>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={amenityInput}
+                onChange={(e) => { setAmenityInput(e.target.value); setSelectedAmenity(null); setDropdownOpen(true); }}
+                onKeyPress={handleAmenityKeyPress}
+                placeholder="Search amenities (e.g. WiFi)"
+                className="flex-1 p-2 border rounded"
+              />
+              <button
+                type="button"
+                onClick={handleAddAmenity}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Dropdown */}
+            {dropdownOpen && amenityInput && (
+              <div className="absolute z-40 w-full bg-white border rounded shadow max-h-48 overflow-auto">
+                {amenityOptions.filter(a => a.name && a.name.toLowerCase().includes(amenityInput.toLowerCase())).length === 0 ? (
+                  <div className="p-2 text-sm text-gray-500">No amenities found</div>
+                ) : (
+                  amenityOptions.filter(a => a.name && a.name.toLowerCase().includes(amenityInput.toLowerCase())).map(opt => (
+                    <div
+                      key={opt.id}
+                      className="p-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => { setAmenityInput(opt.name); setSelectedAmenity(opt); setDropdownOpen(false); }}
+                    >
+                      {opt.name}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
           
           {/* Danh sách amenities đã thêm */}
           {form.amenities.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {form.amenities.map((amenity, index) => (
-                <div
-                  key={index}
-                  className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                >
-                  {amenity}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAmenity(index)}
-                    className="text-blue-600 hover:text-blue-800 font-bold"
+              {form.amenities.map((amenity, index) => {
+                const label = (amenity && typeof amenity === 'object') ? amenity.name : amenity;
+                return (
+                  <div
+                    key={index}
+                    className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
                   >
-                    ×
-                  </button>
-                </div>
-              ))}
+                    {label}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAmenity(index)}
+                      className="text-blue-600 hover:text-blue-800 font-bold"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -296,7 +375,6 @@ const AddRoomPage = () => {
         </div>
       </form>
 
-      <Footer />
     </div>
   );
 };

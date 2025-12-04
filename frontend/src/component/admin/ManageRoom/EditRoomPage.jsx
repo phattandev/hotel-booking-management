@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Footer from '../common/Footer';
-import { getAllRooms, updateRoom } from '../../service/ApiService';
+import Footer from '../../common/Footer';
+import { getAllRooms, updateRoom } from '../../../service/ApiService';
 
 const EditRoomPage = () => {
   const { id } = useParams();
@@ -282,7 +282,8 @@ const EditRoomPage = () => {
             <div className="flex flex-wrap gap-2">
               {form.amenities.map((amenity, index) => (
                 <div key={index} className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                  {amenity}
+                  {/* Amenity may be an object from API or a simple string; handle both */}
+                  {typeof amenity === 'object' && amenity !== null ? (amenity.name || amenity.id || JSON.stringify(amenity)) : amenity}
                   <button
                     type="button"
                     onClick={() => handleRemoveAmenity(index)}

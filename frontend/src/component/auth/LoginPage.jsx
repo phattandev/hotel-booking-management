@@ -24,7 +24,7 @@ const LoginPage = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         if (!login.email || !login.password) {
-            setErrorMessage("Please enter email and password.");
+            setErrorMessage("Vui lòng nhập email và mật khẩu.");
             return;
         }
         try {
@@ -38,14 +38,15 @@ const LoginPage = () => {
                 navigate("/home");
             }
         } catch (error) {
-            setErrorMessage(`Login Error: ${error.message}`);
+            setErrorMessage(`Lỗi đăng nhập: ${error.message}`);
         }
     };
 
     return (
         <section className="container mx-auto flex justify-center items-center min-h-screen">
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center text-gray-800">Login</h2>
+
+                <h2 className="text-2xl font-bold text-center text-gray-800">Đăng nhập</h2>
 
                 {errorMessage && <p className="text-red-500 text-center">{errorMessage}</p>}
 
@@ -56,16 +57,16 @@ const LoginPage = () => {
                             <input type="email" name="email" value={login.email} onChange={handleLoginChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Password</label>
+                            <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
                             <input type="password" name="password" value={login.password} onChange={handleLoginChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" />
                         </div>
                     </div>
                     <button type="submit" className="w-full px-4 py-2 mt-6 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        Login
+                        Đăng nhập
                     </button>
                 </form>
                 <p className="text-sm text-center text-gray-600">
-                    Don't have an account? <Link to="/register" className="font-medium text-green-600 hover:underline">Register</Link>
+                    Bạn chưa có tài khoản? <Link to="/register" className="font-medium text-green-600 hover:underline">Đăng ký</Link>
                 </p>
             </div>
         </section>

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Footer from '../common/Footer';
-import { getAllBookings } from '../../service/ApiService';
+import { getAllBookings } from '../../../service/ApiService';
 
 const ManageBookingPage = () => {
   const [bookings, setBookings] = useState([]);
@@ -68,8 +67,8 @@ const ManageBookingPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-2 mt-20">Manage Bookings</h1>
-      <p className="text-gray-600 mb-4">View and manage all bookings in the system.</p>
+      <h1 className="text-2xl font-bold mb-2 mt-20">Quản lý đặt phòng</h1>
+      <p className="text-gray-600 mb-4">Xem và quản lý tất cả các đặt phòng trong hệ thống.</p>
 
       {message && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">
@@ -79,13 +78,13 @@ const ManageBookingPage = () => {
 
       {/* Filter Section */}
       <div className="mb-6 p-4 bg-gray-50 rounded">
-        <label className="block text-sm font-medium mb-2">Filter by Room Type:</label>
+        <label className="block text-sm font-medium mb-2">Lọc theo loại phòng:</label>
         <select
           value={filterRoomType}
           onChange={handleFilterChange}
           className="px-3 py-2 border border-gray-300 rounded"
         >
-          <option value="">All Room Types</option>
+          <option value="">Tất cả loại phòng</option>
           {roomTypes.map(type => (
             <option key={type} value={type}>{type}</option>
           ))}
@@ -95,22 +94,22 @@ const ManageBookingPage = () => {
       {/* Bookings List */}
       <div className="bg-white rounded shadow">
         {loading ? (
-          <div className="p-4">Loading...</div>
+          <div className="p-4">Đang tải...</div>
         ) : filteredBookings.length === 0 ? (
-          <div className="p-4 text-gray-600">No bookings found.</div>
+          <div className="p-4 text-gray-600">Không tìm thấy đặt phòng nào.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-100 border-b">
                 <tr>
-                  <th className="px-4 py-3 text-left">Booking ID</th>
-                  <th className="px-4 py-3 text-left">Guest Name</th>
+                  <th className="px-4 py-3 text-left">ID đặt phòng</th>
+                  <th className="px-4 py-3 text-left">Tên khách</th>
                   <th className="px-4 py-3 text-left">Email</th>
-                  <th className="px-4 py-3 text-left">Room Type</th>
-                  <th className="px-4 py-3 text-left">Check-in</th>
-                  <th className="px-4 py-3 text-left">Check-out</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Action</th>
+                  <th className="px-4 py-3 text-left">Loại phòng</th>
+                  <th className="px-4 py-3 text-left">Nhận phòng</th>
+                  <th className="px-4 py-3 text-left">Trả phòng</th>
+                  <th className="px-4 py-3 text-left">Trạng thái</th>
+                  <th className="px-4 py-3 text-left">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -124,7 +123,7 @@ const ManageBookingPage = () => {
                     <td className="px-4 py-3">{booking.checkOutDate || 'N/A'}</td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
-                        {booking.status || 'Active'}
+                        {booking.status === 'BOOKED' ? 'Đã đặt' : booking.status === 'CANCELLED' ? 'Đã hủy' : booking.status || 'Hoạt động'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -132,7 +131,7 @@ const ManageBookingPage = () => {
                         onClick={() => handleCancelClick(booking.id)}
                         className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
                       >
-                        Cancel
+                        Hủy
                       </button>
                     </td>
                   </tr>
@@ -147,20 +146,20 @@ const ManageBookingPage = () => {
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">
-            <h2 className="text-lg font-bold mb-4">Confirm Cancellation</h2>
-            <p className="text-gray-700 mb-6">Are you sure you want to cancel booking #{selectedBookingId}?</p>
+            <h2 className="text-lg font-bold mb-4">Xác nhận hủy</h2>
+            <p className="text-gray-700 mb-6">Bạn có chắc chắn muốn hủy đặt phòng #{selectedBookingId}?</p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={handleCancelCancel}
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
               >
-                No, Keep It
+                Không, giữ lại
               </button>
               <button
                 onClick={handleCancelConfirm}
                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
-                Yes, Cancel Booking
+                Có, hủy đặt phòng
               </button>
             </div>
           </div>

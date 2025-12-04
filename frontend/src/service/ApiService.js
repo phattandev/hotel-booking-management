@@ -1,3 +1,23 @@
+// ===== User Profile (Customer/Admin) =====
+// Get logged-in user's profile info
+export async function getLoggedInProfileInfo() {
+    try {
+        const res = await api.get('/api/v1/users/get-logged-in-profile-info', { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error fetching profile info');
+    }
+}
+
+// Update user profile (fields optional)
+export async function updateUserProfile(payload) {
+    try {
+        const res = await api.put('/api/v1/users/update', payload, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error updating profile');
+    }
+}
 import axios from 'axios';
 import authEventEmitter from '../utils/authEventEmitter';
 
@@ -188,9 +208,19 @@ export async function getAllRooms() {
     }
 }
 
+// ===== Hotels =====
+export async function getAllHotels() {
+    try {
+        const res = await api.get('/api/v1/hotels/all');
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error fetching hotels');
+    }
+}
+
 export async function getRoomById(roomId) {
     try {
-        const result = await api.get(`/api/v1/rooms/room/${roomId}`);
+        const result = await api.get(`/api/v1/rooms/${roomId}`);
         return result.data;
     } catch (error) {
         throw new Error(`Error fetching room ${error.message}`);
@@ -213,7 +243,9 @@ export async function addRoom(roomData) {
         // Thêm amenities nếu có
         if (roomData.amenities && Array.isArray(roomData.amenities)) {
             roomData.amenities.forEach((amenity, index) => {
-                formData.append(`amenities[${index}]`, amenity);
+                // amenity may be an object (from API) or a primitive; append id if present
+                const value = (amenity && typeof amenity === 'object') ? (amenity.id ?? amenity.name ?? JSON.stringify(amenity)) : amenity;
+                formData.append(`amenities[${index}]`, value);
             });
         }
         
@@ -303,9 +335,9 @@ export async function updateRoom(roomId, roomData) {
 }
 
 /* This function books a room */
-export async function bookRoom(roomId, booking) {
+export async function bookRoom(bookingData) {
 	try {
-		const response = await api.post(`/api/v1/bookings/room/${roomId}/booking`, booking, {
+		const response = await api.post(`/api/v1/bookings/create`, bookingData, {
 			headers: getHeader()
 		})
 		return response.data
@@ -328,4 +360,111 @@ export async function getAllBookings() {
 	} catch (error) {
 		throw new Error(`Error fetching bookings : ${error.message}`)
 	}
+}
+
+/* This function gets user's bookings */
+export async function getUserBookings() {
+	try {
+		const result = await api.get("/api/v1/users/get-user-bookings", {
+			headers: getHeader()
+		})
+		return result.data
+	} catch (error) {
+		throw new Error(`Error fetching user bookings : ${error.message}`)
+	}
+}
+
+/* This function gets booking by confirmation code */
+export async function getBookingByConfirmationCode(confirmationCode) {
+	try {
+		const result = await api.get(`/api/v1/bookings/get-by-confirmation-code/${confirmationCode}`)
+		return result.data
+	} catch (error) {
+		throw new Error(`Error fetching booking : ${error.message}`)
+	}
+}
+
+// ================= Amenities (Hotel & Room) =================
+// Note: backend endpoints may still be under development. These helpers
+// use the expected REST routes and include auth headers where appropriate.
+export async function getHotelAmenities() {
+    try {
+        const res = await api.get('/api/v1/amenities/hotel');
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error fetching hotel amenities');
+    }
+}
+
+export async function addHotelAmenity(payload) {
+    try {
+        const res = await api.post('/api/v1/amenities/hotel/add', payload, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error adding hotel amenity');
+    }
+}
+
+export async function updateHotelAmenity(id, payload) {
+    try {
+        const res = await api.put(`/api/v1/amenities/hotel/${id}`, payload, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error updating hotel amenity');
+    }
+}
+
+export async function deleteHotelAmenity(id) {
+    try {
+        const res = await api.delete(`/api/v1/amenities/hotel/${id}`, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error deleting hotel amenity');
+    }
+}
+
+export async function getRoomAmenities() {
+    try {
+        const res = await api.get('/api/v1/amenities/room');
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error fetching room amenities');
+    }
+}
+
+// Lấy tất cả amenities (dùng cho combobox trên frontend)
+export async function getAllAmenities() {
+    try {
+        const res = await api.get('/api/v1/amenities/all');
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error fetching amenities');
+    }
+}
+
+export async function addRoomAmenity(payload) {
+    try {
+        const res = await api.post('/api/v1/amenities/room/add', payload, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error adding room amenity');
+    }
+}
+
+export async function updateRoomAmenity(id, payload) {
+    try {
+        const res = await api.put(`/api/v1/amenities/room/${id}`, payload, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error updating room amenity');
+    }
+}
+
+export async function deleteRoomAmenity(id) {
+    try {
+        const res = await api.delete(`/api/v1/amenities/room/${id}`, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error deleting room amenity');
+    }
 }

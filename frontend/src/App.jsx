@@ -6,15 +6,21 @@ import RegisterPage from './component/auth/RegisterPage'
 import HomePage from './component/home/HomePage'
 import NavBar from './component/common/NavBar'
 import AllRoomPage from './component/booking_rooms/AllRoomPage'
+import RoomDetailPage from './component/booking_rooms/RoomDetailPage'
+import AllHotelPage from './component/hotel/AllHotelPage'
+import HotelDetailPage from './component/hotel/HotelDetailPage'
 import FindBookingPage from './component/booking_rooms/FindBookingPage'
+import BookingResultPage from './component/booking_rooms/BookingResultPage'
 
 // Admin
 import AdminPage from './component/admin/AdminPage'
-import ManageRoomPage from './component/admin/ManageRoomPage'
-import AddRoomPage from './component/admin/AddRoomPage'
-import EditRoomPage from './component/admin/EditRoomPage'
-import ManageBookingPage from './component/admin/ManageBookingPage'
-import ManageAccountPage from './component/admin/ManageAccountPage'
+import ManageRoomPage from './component/admin/ManageRoom/ManageRoomPage'
+import AddRoomPage from './component/admin/ManageRoom/AddRoomPage'
+import EditRoomPage from './component/admin/ManageRoom/EditRoomPage'
+import ManageBookingPage from './component/admin/ManageBooking/ManageBookingPage'
+import ManageAccountPage from './component/admin/ManageAccount/ManageAccountPage'
+import ManageAmenitiesPage from './component/admin/ManageAmenity/ManageAmenitiesPage'
+import ProfilePage from './component/profile_user/ProfilePage'
 import ProtectedRoute from './component/admin/ProtectedRoute'
 
 function App() {
@@ -32,6 +38,10 @@ function App() {
             <Route exact path="/home" element={<HomePage />} />
             {/* Public pages */}
             <Route exact path="/rooms" element={<AllRoomPage />} />
+            <Route exact path="/room/:id" element={<RoomDetailPage />} />
+            <Route exact path="/hotels" element={<AllHotelPage />} />
+            <Route exact path="/hotel/:id" element={<HotelDetailPage />} />
+            <Route exact path="/booking-result" element={<BookingResultPage />} />
             <Route exact path="/find-booking" element={<FindBookingPage />} />
 
             {/* Admin pages (protected) */}
@@ -41,7 +51,9 @@ function App() {
             <Route exact path="/admin/edit-room/:id" element={<ProtectedRoute><EditRoomPage /></ProtectedRoute>} />
             <Route exact path="/admin/manage-bookings" element={<ProtectedRoute><ManageBookingPage /></ProtectedRoute>} />
             <Route exact path="/admin/manage-accounts" element={<ProtectedRoute><ManageAccountPage /></ProtectedRoute>} />
-        </Routes>
+            <Route exact path="/admin/manage-amenities" element={<ProtectedRoute><ManageAmenitiesPage /></ProtectedRoute>} />
+      <Route exact path="/profile" element={<ProfilePage />} />
+    </Routes>
       </div>
     </BrowserRouter>
   )

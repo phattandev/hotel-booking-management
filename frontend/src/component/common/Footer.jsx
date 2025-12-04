@@ -7,13 +7,13 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Column 1: Project description */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-3">Hotel Booking Online</h3>
-            <p className="text-sm text-gray-300">A simple hotel booking application for learning and demonstration purposes. Find rooms, make bookings and manage your reservations with ease.</p>
+            <h3 className="text-lg font-semibold text-white mb-3">Ứng dụng đặt phòng trực tuyến</h3>
+            <p className="text-sm text-gray-300">Một ứng dụng đặt phòng khách sạn đơn giản cho mục đích học tập. Tìm phòng, đặt phòng và quản lý đặt phòng một cách dễ dàng.</p>
           </div>
 
           {/* Column 2: Developers */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-3">Developers</h3>
+            <h3 className="text-lg font-semibold text-white mb-3">Sinh viên thực hiện</h3>
             <ul className="text-sm text-gray-300 space-y-2">
               <li>Huỳnh Nguyễn Tấn Phát - MSSV: DH52201181</li>
               <li>Lai Thuận Phát - MSSV: DH52201183</li>
@@ -22,7 +22,7 @@ const Footer = () => {
 
           {/* Column 3: Contact */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-3">Contact & Support</h3>
+            <h3 className="text-lg font-semibold text-white mb-3">Liên hệ và hỗ trợ</h3>
             <ul className="text-sm text-gray-300 space-y-2">
               <li>Phone: <a href="tel:0912345678" className="text-green-300 hover:underline">0912345678</a></li>
               <li>Email: <a href="mailto:support@hotelbooking.example" className="text-green-300 hover:underline">support@hotelbooking.example</a></li>

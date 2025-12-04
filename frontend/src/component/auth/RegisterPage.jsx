@@ -39,21 +39,21 @@ const RegisterPage = () => {
 
         // 1. Kiểm tra các trường không được để trống
         if (!registration.fullname || !registration.email || !registration.phone || !registration.dob || !registration.password) {
-            setErrorMessage("Please fill in all fields.");
+            setErrorMessage("Vui lòng điền vào tất cả các trường.");
             return;
         }
 
         // 2. Kiểm tra định dạng email
         const emailRegex = /^[^\s@]+@gmail\.com$/;
         if (!emailRegex.test(registration.email)) {
-            setErrorMessage("Email must be a valid @gmail.com address.");
+            setErrorMessage("Email phải là địa chỉ @gmail.com hợp lệ.");
             return;
         }
 
         // 3. Kiểm tra mật khẩu
         const passwordRegex = /[a-zA-Z]/;
         if (!passwordRegex.test(registration.password)) {
-            setErrorMessage("Password must contain at least one letter.");
+            setErrorMessage("Mật khẩu phải chứa ít nhất một chữ cái.");
             return;
         }
 
@@ -64,17 +64,17 @@ const RegisterPage = () => {
         hundredYearsAgo.setFullYear(today.getFullYear() - 100);
 
         if (dob > today) {
-            setErrorMessage("Date of birth cannot be in the future.");
+            setErrorMessage("Ngày sinh không được lớn hơn ngày hiện tại.");
             return;
         }
         if (dob < hundredYearsAgo) {
-            setErrorMessage("You must be less than 100 years old to register.");
+            setErrorMessage("Bạn phải dưới 100 tuổi để đăng ký.");
             return;
         }
 
         try {
             const result = await registerUser(registration);
-            setSuccessMessage(result.message || "Registration successful!");
+            setSuccessMessage(result.message || "Đăng ký thành công!");
             setErrorMessage("");
             // Xóa form sau khi đăng ký thành công
             setRegistration({
@@ -91,9 +91,10 @@ const RegisterPage = () => {
         } catch (error) {
             setSuccessMessage("");
             if (error.response && error.response.data && error.response.data.message) {
+                // If backend message exists we prefer to show it (could be already localized)
                 setErrorMessage(error.response.data.message);
             } else {
-                setErrorMessage(`Registration Error: ${error.message}`);
+                setErrorMessage(`Lỗi đăng ký: ${error.message}`);
             }
         }
     };
@@ -101,7 +102,7 @@ const RegisterPage = () => {
     return (
         <section className="container mx-auto flex justify-center items-center min-h-screen">
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center text-gray-800">Register</h2>
+                <h2 className="text-2xl font-bold text-center text-gray-800">Đăng ký tài khoản</h2>
                 
                 {/* Hiển thị thông báo lỗi hoặc thành công */}
                 {errorMessage && <p className="text-red-500 text-center">{errorMessage}</p>}
@@ -110,15 +111,15 @@ const RegisterPage = () => {
                 <form onSubmit={handleRegistration}>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Full Name <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium text-gray-700">Họ và tên <span className="text-red-500">*</span></label>
                             <input type="text" name="fullname" value={registration.fullname} onChange={handleRegistrationChange} onBlur={handleFullNameBlur} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Phone Number <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium text-gray-700">Số điện thoại <span className="text-red-500">*</span></label>
                             <input type="tel" name="phone" value={registration.phone} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Date of Birth <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium text-gray-700">Ngày sinh <span className="text-red-500">*</span></label>
                             <input type="date" name="dob" value={registration.dob} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                         <div>
@@ -126,16 +127,16 @@ const RegisterPage = () => {
                             <input type="email" name="email" value={registration.email} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium text-gray-700">Mật khẩu <span className="text-red-500">*</span></label>
                             <input type="password" name="password" value={registration.password} onChange={handleRegistrationChange} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500" required />
                         </div>
                     </div>
                     <button type="submit" className="w-full px-4 py-2 mt-6 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        Register
+                        Đăng ký
                     </button>
                 </form>
                 <p className="text-sm text-center text-gray-600">
-                    Already have an account? <Link to="/login" className="font-medium text-green-600 hover:underline">Login</Link>
+                    Bạn đã có tài khoản? <Link to="/login" className="font-medium text-green-600 hover:underline">Đăng nhập</Link>
                 </p>
             </div>
         </section>

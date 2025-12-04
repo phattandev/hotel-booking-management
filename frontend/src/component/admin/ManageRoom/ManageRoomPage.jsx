@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Footer from '../common/Footer';
-import { getAllRooms, deleteRoom } from '../../service/ApiService';
+import { getAllRooms, deleteRoom } from '../../../service/ApiService';
 
 const ManageRoomPage = () => {
   const [rooms, setRooms] = useState([]);
@@ -42,7 +41,7 @@ const ManageRoomPage = () => {
 
   const handleEdit = () => {
     if (selectedIds.size !== 1) {
-      setMessage('Please select exactly one room to edit.');
+      setMessage('Vui lòng chọn đúng một phòng để chỉnh sửa.');
       return;
     }
     const id = Array.from(selectedIds)[0];
@@ -51,7 +50,7 @@ const ManageRoomPage = () => {
 
   const handleDeleteClick = () => {
     if (selectedIds.size === 0) {
-      setMessage('Please select at least one room to delete.');
+      setMessage('Vui lòng chọn ít nhất một phòng để xóa.');
       return;
     }
     setShowDeleteConfirm(true);
@@ -65,12 +64,12 @@ const ManageRoomPage = () => {
       for (const roomId of selectedIds) {
         await deleteRoom(roomId);
       }
-      setMessage(`Deleted ${selectedIds.size} room(s) successfully.`);
+      setMessage(`Đã xóa ${selectedIds.size} phòng thành công.`);
       setRooms(prev => prev.filter(r => !selectedIds.has(r.id)));
       setSelectedIds(new Set());
       setShowDeleteConfirm(false);
     } catch (err) {
-      setError(err.message || 'Error deleting room(s)');
+      setError(err.message || 'Lỗi xóa phòng');
     }
     setActionLoading(false);
   };
@@ -81,8 +80,8 @@ const ManageRoomPage = () => {
 
   return (
     <div className="container mx-auto p-6 mt-20">
-      <h1 className="text-2xl font-bold mb-2">Manage Rooms</h1>
-      <p className="text-gray-600 mb-4">View and manage all rooms in the system.</p>
+      <h1 className="text-2xl font-bold mb-2">Quản lý phòng</h1>
+      <p className="text-gray-600 mb-4">Xem và quản lý tất cả các phòng trong hệ thống.</p>
 
       {message && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">
@@ -97,21 +96,21 @@ const ManageRoomPage = () => {
 
       <div className="flex justify-end gap-3 mb-4">
         <button onClick={handleAdd} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-          + Add Room
+          + Thêm phòng
         </button>
         <button onClick={handleEdit} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          Edit
+          Chỉnh sửa
         </button>
         <button onClick={handleDeleteClick} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" disabled={actionLoading}>
-          Delete
+          Xóa
         </button>
       </div>
 
       <div className="bg-white rounded shadow overflow-hidden">
         {loading ? (
-          <div className="p-4">Loading...</div>
+          <div className="p-4">Đang tải...</div>
         ) : rooms.length === 0 ? (
-          <div className="p-4 text-gray-600">No rooms found. Use Add to create a new room.</div>
+          <div className="p-4 text-gray-600">Không tìm thấy phòng nào. Sử dụng Thêm để tạo phòng mới.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -130,12 +129,12 @@ const ManageRoomPage = () => {
                       }}
                     />
                   </th>
-                  <th className="px-4 py-3 text-left">Room #</th>
-                  <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">Type</th>
-                  <th className="px-4 py-3 text-left">Price</th>
-                  <th className="px-4 py-3 text-left">Capacity</th>
-                  <th className="px-4 py-3 text-left">Available</th>
+                  <th className="px-4 py-3 text-left">Phòng #</th>
+                  <th className="px-4 py-3 text-left">Tên</th>
+                  <th className="px-4 py-3 text-left">Loại</th>
+                  <th className="px-4 py-3 text-left">Giá</th>
+                  <th className="px-4 py-3 text-left">Sức chứa</th>
+                  <th className="px-4 py-3 text-left">Còn trống</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,7 +155,7 @@ const ManageRoomPage = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3">{room.price?.toLocaleString()} ₫</td>
-                    <td className="px-4 py-3">{room.capacity} pax</td>
+                    <td className="px-4 py-3">{room.capacity} người</td>
                     <td className="px-4 py-3">{room.amount}</td>
                   </tr>
                 ))}
@@ -170,9 +169,9 @@ const ManageRoomPage = () => {
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">
-            <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
+            <h2 className="text-lg font-bold mb-4">Xác nhận xóa</h2>
             <p className="text-gray-700 mb-6">
-              Are you sure you want to delete {selectedIds.size} selected room(s)? This action cannot be undone.
+              Bạn có chắc chắn muốn xóa {selectedIds.size} phòng đã chọn? Hành động này không thể hoàn tác.
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -180,21 +179,19 @@ const ManageRoomPage = () => {
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
                 disabled={actionLoading}
               >
-                Cancel
+                Hủy
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                 disabled={actionLoading}
               >
-                Yes, Delete
+                Có, xóa
               </button>
             </div>
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 };
