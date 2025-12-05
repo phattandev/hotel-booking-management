@@ -87,15 +87,12 @@ const ProfilePage = () => {
         return;
       }
 
-      const payload = {};
-      if (form.fullName !== profile.fullName) payload.fullName = form.fullName.trim();
-      if (form.phone !== profile.phone) payload.phone = form.phone.trim();
-      if (form.dob !== profile.dob) payload.dob = form.dob;
-      if (Object.keys(payload).length === 0) {
-        setMsg('No changes to save.');
-        setEdit(false);
-        return;
-      }
+      // Always send all required fields (fullName, phone, dob are required by backend)
+      const payload = {
+        fullName: form.fullName.trim(),
+        phone: form.phone.trim(),
+        dob: form.dob
+      };
       const res = await updateUserProfile(payload);
       console.log('[ProfilePage] Profile updated:', res.data);
       setProfile(res.data);

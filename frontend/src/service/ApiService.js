@@ -261,6 +261,32 @@ export async function getHotelById(hotelId) {
     }
 }
 
+// Search hotels by filters (location, dates, capacity, room quantity)
+export async function searchHotels(filters) {
+    try {
+        const params = new URLSearchParams();
+        if (filters.location) params.append('location', filters.location);
+        if (filters.checkInDate) params.append('checkInDate', filters.checkInDate);
+        if (filters.checkOutDate) params.append('checkOutDate', filters.checkOutDate);
+        if (filters.capacity) params.append('capacity', filters.capacity);
+        if (filters.roomQuantity) params.append('roomQuantity', filters.roomQuantity);
+        
+        const res = await api.get(`/api/v1/hotels/search?${params.toString()}`);
+        const serverData = res.data;
+        if (Array.isArray(serverData)) {
+            return { status: 200, message: 'OK', data: serverData };
+        }
+        if (serverData && Array.isArray(serverData.data)) {
+            return serverData;
+        }
+        const arr = serverData?.data ?? serverData ?? [];
+        return { status: 200, message: 'OK', data: Array.isArray(arr) ? arr : [] };
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error searching hotels');
+    }
+}
+
+
 // Add new hotel (multipart/form-data, image optional)
 export async function addHotel(payload) {
     try {
@@ -473,7 +499,7 @@ export async function bookRoom(bookingData) {
 /* This function get all bookings */
 export async function getAllBookings() {
 	try {
-		const result = await api.get("/api/v1/bookings/all-bookings", {
+		const result = await api.get("/api/v1/bookings/all", {
 			headers: getHeader()
 		})
 		return result.data
@@ -505,16 +531,28 @@ export async function getBookingByConfirmationCode(confirmationCode) {
 }
 
 /* This function cancels a booking with a reason */
-export async function cancelBooking(bookingId, reason) {
+export async function cancelBooking(bookingId, cancelReason) {
 	try {
 		const result = await api.delete(`/api/v1/bookings/cancel/${bookingId}`, {
-			data: { reason },
+			data: { cancelReason },
 			headers: getHeader()
 		})
 		return result.data
 	} catch (error) {
 		throw new Error(error.response?.data?.message || `Error cancelling booking : ${error.message}`)
 	}
+}
+
+/* Update a booking (status, cancelReason, roomNumber etc) */
+export async function updateBooking(bookingId, payload) {
+    try {
+        const result = await api.put(`/api/v1/bookings/update/${bookingId}`, payload, {
+            headers: getHeader()
+        });
+        return result.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || `Error updating booking : ${error.message}`);
+    }
 }
 
 // ================= Amenities (Hotel & Room) =================

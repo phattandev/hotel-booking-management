@@ -10,7 +10,7 @@ const AddRoomPage = () => {
     let parsedValue = value;
     if (name === 'hotelId' && value) {
       parsedValue = parseInt(value, 10);
-    } else if (['roomNumber', 'price', 'capacity', 'amount'].includes(name) && value) {
+    } else if (['price', 'capacity', 'amount'].includes(name) && value) {
       parsedValue = name === 'price' ? parseFloat(value) : parseInt(value, 10);
     }
     setForm({ ...form, [name]: parsedValue });
@@ -136,7 +136,6 @@ const AddRoomPage = () => {
     // Debug log
     console.log('[AddRoomPage] Form data:', form);
     console.log('[AddRoomPage] Validation check:', {
-      roomNumber: form.roomNumber,
       name: form.name,
       price: form.price,
       capacity: form.capacity,
@@ -172,7 +171,6 @@ const AddRoomPage = () => {
 
       const roomData = {
         hotelId: form.hotelId, // Already parsed to integer in handleChange
-        roomNumber: form.roomNumber,
         type: form.type,
         price: form.price,
         capacity: form.capacity,

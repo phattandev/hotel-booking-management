@@ -54,7 +54,7 @@ const ManageRoomPage = () => {
     const hotelName = location?.state?.hotelName;
     if (hotelId) setCurrentHotel({ id: hotelId, name: hotelName });
     fetchRooms();
-  }, []);
+  }, [location?.state?.hotelId, location?.state?.rooms]);
 
   const toggleSelect = (id) => {
     const next = new Set(selectedIds);
@@ -78,7 +78,7 @@ const ManageRoomPage = () => {
     const id = Array.from(selectedIds)[0];
     // preserve hotel context if present
     if (currentHotel) {
-      navigate(`/admin/edit-room/${id}`, { state: { hotelId: currentHotel.id } });
+      navigate(`/admin/edit-room/${id}`, { state: { hotelId: currentHotel.id, hotelName: currentHotel.name } });
     } else {
       navigate(`/admin/edit-room/${id}`);
     }

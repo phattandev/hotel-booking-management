@@ -181,8 +181,13 @@ const EditRoomPage = () => {
         photo: form.photo
       };
 
+      console.log('[EditRoomPage] Sending roomData:', roomData);
+      console.log('[EditRoomPage] Photo file:', form.photo);
       await updateRoom(id, roomData);
       setSuccess('Room updated successfully! Refetching rooms...');
+      
+      // If opened from a hotel context, refetch rooms from server and go back
+      // with updated list
       const redirectDelay = setTimeout(async () => {
         if (managedHotelId && hotelName) {
           try {
@@ -204,6 +209,7 @@ const EditRoomPage = () => {
       }, 1500);
       return () => clearTimeout(redirectDelay);
     } catch (err) {
+      console.error('[EditRoomPage] Error:', err);
       setError(err.message || 'Error updating room');
     }
     setSubmitting(false);
@@ -255,8 +261,8 @@ const EditRoomPage = () => {
             >
               <option>SINGLE</option>
               <option>DOUBLE</option>
-              <option>SUITE</option>
-              <option>FAMILY</option>
+              <option>SUIT</option>
+              <option>TRIPLE</option>
             </select>
           </div>
           <div>

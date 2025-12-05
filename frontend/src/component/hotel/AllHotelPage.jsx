@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Footer from '../common/Footer';
-import { getAllHotels } from '../../service/ApiService';
+import { getAllHotels, getRoomsByHotel, searchHotels } from '../../service/ApiService';
 import { useNavigate } from 'react-router-dom';
 
 const AllHotelPage = () => {
@@ -8,6 +8,17 @@ const AllHotelPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [searchLoading, setSearchLoading] = useState(false);
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    location: '',
+    checkInDate: '',
+    checkOutDate: '',
+    capacity: '',
+    roomQuantity: ''
+  });
+  const [hasSearched, setHasSearched] = useState(false);
 
   const fetchHotels = async () => {
     setLoading(true);
@@ -57,13 +68,72 @@ const AllHotelPage = () => {
     });
   };
 
-  const handleViewRooms = (hotel) => {
-    // Navigate to AllRoomPage and pass rooms + hotelId in state so AllRoomPage can display them
-  navigate('/rooms', { state: { rooms: hotel.rooms, hotelName: hotel.name, hotelId: hotel.id, hotelImages: hotel.images } });
+  const handleViewRooms = async (hotel) => {
+    // Fetch rooms for this hotel from the dedicated endpoint
+    try {
+      const res = await getRoomsByHotel(hotel.id);
+      const rooms = res.data || [];
+      // Navigate to AllRoomPage with rooms, hotelId, and hotel info
+      navigate('/rooms', { 
+        state: { 
+          rooms: rooms, 
+          hotelName: hotel.name, 
+          hotelId: hotel.id, 
+          hotelImages: hotel.images 
+        } 
+      });
+    } catch (err) {
+      console.error('Error fetching rooms for hotel:', err);
+      alert('Không thể tải phòng của khách sạn này. Vui lòng thử lại.');
+    }
   };
 
   const handleViewDetail = (hotelId) => {
     navigate(`/hotel/${hotelId}`);
+  };
+
+  // Handle filter input change
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Handle search
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setSearchLoading(true);
+    setError(null);
+    try {
+      const res = await searchHotels(filters);
+      setHotels(res.data || []);
+      setHasSearched(true);
+    } catch (err) {
+      setError(err.message || 'Error searching hotels');
+      setHotels([]);
+    }
+    setSearchLoading(false);
+  };
+
+  // Handle clear filters
+  const handleClearFilters = async () => {
+    setFilters({
+      location: '',
+      checkInDate: '',
+      checkOutDate: '',
+      capacity: '',
+      roomQuantity: ''
+    });
+    setHasSearched(false);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getAllHotels();
+      setHotels(res.data || []);
+    } catch (err) {
+      setError(err.message || 'Error fetching hotels');
+      setHotels([]);
+    }
+    setLoading(false);
   };
 
   return (
@@ -71,6 +141,82 @@ const AllHotelPage = () => {
       <main className="container mx-auto p-6 mt-20">
         <h1 className="text-3xl font-bold mb-2">Khách sạn</h1>
         <p className="text-gray-600 mb-6">Duyệt danh sách khách sạn có phòng trống</p>
+
+        {/* Search Filter Bar */}
+        <form onSubmit={handleSearch} className="bg-white p-6 rounded shadow mb-6">
+          <h3 className="text-lg font-semibold mb-4">Tìm kiếm khách sạn</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Vị trí</label>
+              <input 
+                type="text" 
+                name="location" 
+                value={filters.location}
+                onChange={handleFilterChange}
+                placeholder="e.g. Hà Nội"
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Ngày nhận phòng</label>
+              <input 
+                type="date" 
+                name="checkInDate" 
+                value={filters.checkInDate}
+                onChange={handleFilterChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Ngày trả phòng</label>
+              <input 
+                type="date" 
+                name="checkOutDate" 
+                value={filters.checkOutDate}
+                onChange={handleFilterChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Sức chứa</label>
+              <input 
+                type="number" 
+                name="capacity" 
+                value={filters.capacity}
+                onChange={handleFilterChange}
+                placeholder="e.g. 2"
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Số phòng cần</label>
+              <input 
+                type="number" 
+                name="roomQuantity" 
+                value={filters.roomQuantity}
+                onChange={handleFilterChange}
+                placeholder="e.g. 1"
+                className="w-full p-2 border rounded"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button 
+              type="button"
+              onClick={handleClearFilters}
+              className="px-6 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+            >
+              Xóa lọc
+            </button>
+            <button 
+              type="submit"
+              disabled={searchLoading}
+              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+            >
+              {searchLoading ? 'Đang tìm...' : 'Tìm kiếm'}
+            </button>
+          </div>
+        </form>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded">
@@ -81,7 +227,9 @@ const AllHotelPage = () => {
         {loading ? (
           <div className="text-center py-10">Đang tải khách sạn...</div>
         ) : hotels.length === 0 ? (
-          <div className="text-center py-10 text-gray-600">Hiện không có khách sạn nào.</div>
+          <div className="text-center py-10 text-gray-600">
+            {hasSearched ? 'Không tìm thấy khách sạn phù hợp.' : 'Hiện không có khách sạn nào.'}
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {hotels.map(hotel => (

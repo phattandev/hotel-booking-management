@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Footer from '../common/Footer';
-import { getAllRooms } from '../../service/ApiService';
+import { getRoomsByHotel } from '../../service/ApiService';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 	const AllRoomPage = () => {
@@ -18,12 +18,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 		setLoading(true);
 		setError(null);
 		try {
+				// If rooms were passed via state, use them (from AllHotelPage click)
 				if (roomsFromState && Array.isArray(roomsFromState)) {
 					setRooms(roomsFromState);
-				} else {
-					const res = await getAllRooms();
-					// API trả về { status, message, data: [room, ...] }
+				} else if (hotelIdFromState) {
+					// Otherwise if hotelId provided, fetch from endpoint
+					const res = await getRoomsByHotel(hotelIdFromState);
 					setRooms(res.data || []);
+				} else {
+					// Fallback: show error since we need either rooms or hotelId
+					setError('Không có thông tin khách sạn. Vui lòng chọn khách sạn từ danh sách.');
+					setRooms([]);
 				}
 		} catch (err) {
 			setError(err.message || 'Error fetching rooms');
