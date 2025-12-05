@@ -20,6 +20,9 @@ import EditRoomPage from './component/admin/ManageRoom/EditRoomPage'
 import ManageBookingPage from './component/admin/ManageBooking/ManageBookingPage'
 import ManageAccountPage from './component/admin/ManageAccount/ManageAccountPage'
 import ManageAmenitiesPage from './component/admin/ManageAmenity/ManageAmenitiesPage'
+import AdminAllHotelPage from './component/admin/ManageHotel/AllHotelPage'
+import AddHotelPage from './component/admin/ManageHotel/AddHotelPage'
+import EditHotelPage from './component/admin/ManageHotel/EditHotelPage'
 import ProfilePage from './component/profile_user/ProfilePage'
 import ProtectedRoute from './component/admin/ProtectedRoute'
 
@@ -49,6 +52,9 @@ function App() {
             <Route exact path="/admin/manage-rooms" element={<ProtectedRoute><ManageRoomPage /></ProtectedRoute>} />
             <Route exact path="/admin/add-room" element={<ProtectedRoute><AddRoomPage /></ProtectedRoute>} />
             <Route exact path="/admin/edit-room/:id" element={<ProtectedRoute><EditRoomPage /></ProtectedRoute>} />
+            <Route exact path="/admin/manage-hotels" element={<ProtectedRoute><AdminAllHotelPage /></ProtectedRoute>} />
+            <Route exact path="/admin/add-hotel" element={<ProtectedRoute><AddHotelPage /></ProtectedRoute>} />
+            <Route exact path="/admin/edit-hotel/:id" element={<ProtectedRoute><EditHotelPage /></ProtectedRoute>} />
             <Route exact path="/admin/manage-bookings" element={<ProtectedRoute><ManageBookingPage /></ProtectedRoute>} />
             <Route exact path="/admin/manage-accounts" element={<ProtectedRoute><ManageAccountPage /></ProtectedRoute>} />
             <Route exact path="/admin/manage-amenities" element={<ProtectedRoute><ManageAmenitiesPage /></ProtectedRoute>} />

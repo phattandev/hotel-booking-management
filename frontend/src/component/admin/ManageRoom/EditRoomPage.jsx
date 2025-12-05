@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Footer from '../../common/Footer';
-import { getAllRooms, updateRoom } from '../../../service/ApiService';
+import { getAllRooms, updateRoom, getAllAmenities, getRoomsByHotel } from '../../../service/ApiService';
 
 const EditRoomPage = () => {
   const { id } = useParams();
+  const location = useLocation();
+  const managedHotelId = location?.state?.hotelId;
+  const hotelName = location?.state?.hotelName;
+  const hotelRooms = location?.state?.rooms;
   const [form, setForm] = useState({
-    roomNumber: '',
     name: '',
     description: '',
     type: 'SINGLE',
@@ -17,24 +20,43 @@ const EditRoomPage = () => {
     photo: null
   });
   const [amenityInput, setAmenityInput] = useState('');
+  const [amenityOptions, setAmenityOptions] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedAmenity, setSelectedAmenity] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const comboRef = useRef();
+
+  // ref to close dropdown when clicking outside
+  useEffect(() => {
+    const onDoc = (e) => {
+      if (comboRef.current && !comboRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', onDoc);
+    return () => document.removeEventListener('click', onDoc);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
+        // Load amenities
+        const amenityRes = await getAllAmenities();
+        const amenityList = amenityRes?.data ?? amenityRes ?? [];
+        if (mounted) setAmenityOptions(Array.isArray(amenityList) ? amenityList : []);
+
         // Lấy danh sách phòng và tìm phòng theo ID
         const res = await getAllRooms();
         const list = res.data || [];
         const room = list.find(r => String(r.id) === String(id));
         if (room && mounted) {
           setForm({
-            roomNumber: room.roomNumber || '',
             name: room.name || '',
             description: room.description || '',
             type: room.type || 'SINGLE',
@@ -62,7 +84,14 @@ const EditRoomPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    // Parse numeric fields
+    let parsedValue = value;
+    if (['price'].includes(name) && value) {
+      parsedValue = parseFloat(value);
+    } else if (['capacity', 'amount'].includes(name) && value) {
+      parsedValue = parseInt(value, 10);
+    }
+    setForm({ ...form, [name]: parsedValue });
   };
 
   const handlePhotoChange = (e) => {
@@ -79,12 +108,24 @@ const EditRoomPage = () => {
   };
 
   const handleAddAmenity = () => {
-    if (amenityInput.trim()) {
-      setForm({
-        ...form,
-        amenities: [...form.amenities, amenityInput.trim()]
-      });
+    // If an option is selected from dropdown, add the object
+    if (selectedAmenity && selectedAmenity.id != null) {
+      // avoid duplicates by id
+      const exists = form.amenities.some(a => a && a.id === selectedAmenity.id);
+      if (!exists) {
+        setForm({ ...form, amenities: [...form.amenities, selectedAmenity] });
+      }
+      setSelectedAmenity(null);
       setAmenityInput('');
+      setDropdownOpen(false);
+      return;
+    }
+
+    // fallback: add as free-text string (keeps previous behavior)
+    if (amenityInput.trim()) {
+      setForm({ ...form, amenities: [...form.amenities, amenityInput.trim()] });
+      setAmenityInput('');
+      setDropdownOpen(false);
     }
   };
 
@@ -106,9 +147,8 @@ const EditRoomPage = () => {
     setSuccess(null);
 
     // Validation
-    if (!form.roomNumber || !form.name || !form.price || !form.capacity || !form.amount) {
+    if (!form.name || !form.price || !form.capacity || !form.amount) {
       const missingFields = [];
-      if (!form.roomNumber) missingFields.push('Room Number');
       if (!form.name) missingFields.push('Name');
       if (!form.price) missingFields.push('Price');
       if (!form.capacity) missingFields.push('Capacity');
@@ -125,21 +165,44 @@ const EditRoomPage = () => {
 
     setSubmitting(true);
     try {
+      // Extract amenity IDs from amenity objects
+      const amenityIds = form.amenities.map(amenity => 
+        (amenity && typeof amenity === 'object') ? amenity.id : null
+      ).filter(id => id !== null);
+
       const roomData = {
-        roomNumber: form.roomNumber,
         type: form.type,
         price: form.price,
         capacity: form.capacity,
         description: form.description.trim(),
         name: form.name.trim(),
         amount: form.amount,
-        amenities: form.amenities,
+        amenityIds: amenityIds,
         photo: form.photo
       };
 
       await updateRoom(id, roomData);
-      setSuccess('Room updated successfully! Redirecting...');
-      setTimeout(() => navigate('/admin/manage-rooms'), 1500);
+      setSuccess('Room updated successfully! Refetching rooms...');
+      const redirectDelay = setTimeout(async () => {
+        if (managedHotelId && hotelName) {
+          try {
+            const res = await getRoomsByHotel(managedHotelId);
+            const freshRooms = res.data || [];
+            navigate('/admin/manage-rooms', { 
+              state: { hotelId: managedHotelId, hotelName: hotelName, rooms: freshRooms } 
+            });
+          } catch (e) {
+            console.error('[EditRoomPage] Error refetching rooms:', e);
+            // fallback: navigate without rooms
+            navigate('/admin/manage-rooms', { 
+              state: { hotelId: managedHotelId, hotelName: hotelName } 
+            });
+          }
+        } else {
+          navigate('/admin/manage-rooms');
+        }
+      }, 1500);
+      return () => clearTimeout(redirectDelay);
     } catch (err) {
       setError(err.message || 'Error updating room');
     }
@@ -155,18 +218,7 @@ const EditRoomPage = () => {
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">{success}</div>}
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4 max-w-2xl">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Room Number *</label>
-            <input 
-              type="number"
-              name="roomNumber" 
-              value={form.roomNumber} 
-              onChange={handleChange} 
-              className="w-full p-2 border rounded"
-              placeholder="e.g. 101"
-            />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Room Name *</label>
             <input 
@@ -260,39 +312,70 @@ const EditRoomPage = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Amenities</label>
-          <div className="flex gap-2 mb-2">
-            <input 
-              type="text"
-              value={amenityInput}
-              onChange={(e) => setAmenityInput(e.target.value)}
-              onKeyPress={handleAmenityKeyPress}
-              className="flex-1 p-2 border rounded"
-              placeholder="e.g. WiFi, Air Conditioning, TV"
-            />
-            <button 
-              type="button"
-              onClick={handleAddAmenity}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              Add
-            </button>
+          <label className="block text-sm font-medium mb-1">Amenities (Tiện nghi)</label>
+          <div className="relative" ref={comboRef}>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={amenityInput}
+                onChange={(e) => { setAmenityInput(e.target.value); setSelectedAmenity(null); setDropdownOpen(true); }}
+                onFocus={() => setDropdownOpen(true)}
+                onKeyPress={handleAmenityKeyPress}
+                placeholder="Search or select amenities"
+                className="flex-1 p-2 border rounded"
+              />
+              <button
+                type="button"
+                onClick={handleAddAmenity}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Dropdown - show all options or filtered */}
+            {dropdownOpen && (
+              <div className="absolute z-40 w-full bg-white border rounded shadow max-h-48 overflow-auto">
+                {amenityOptions.length === 0 ? (
+                  <div className="p-2 text-sm text-gray-500">No amenities available</div>
+                ) : (
+                  amenityOptions
+                    .filter(a => !amenityInput || (a.name && a.name.toLowerCase().includes(amenityInput.toLowerCase())))
+                    .map(opt => (
+                      <div
+                        key={opt.id}
+                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => { setAmenityInput(opt.name); setSelectedAmenity(opt); setDropdownOpen(false); }}
+                      >
+                        {opt.name}
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
           </div>
+          
+          {/* Danh sách amenities đã thêm */}
           {form.amenities.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {form.amenities.map((amenity, index) => (
-                <div key={index} className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                  {/* Amenity may be an object from API or a simple string; handle both */}
-                  {typeof amenity === 'object' && amenity !== null ? (amenity.name || amenity.id || JSON.stringify(amenity)) : amenity}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAmenity(index)}
-                    className="font-bold hover:text-red-600"
+            <div className="flex flex-wrap gap-2 mt-3">
+              {form.amenities.map((amenity, index) => {
+                const label = (amenity && typeof amenity === 'object') ? amenity.name : amenity;
+                return (
+                  <div
+                    key={index}
+                    className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
                   >
-                    ×
-                  </button>
-                </div>
-              ))}
+                    {label}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAmenity(index)}
+                      className="text-blue-600 hover:text-blue-800 font-bold"
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

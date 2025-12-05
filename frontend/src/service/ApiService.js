@@ -46,9 +46,10 @@ api.interceptors.request.use(config => {
 
 export const getHeader = () => {
     const token = localStorage.getItem("token");
+    // Do not set Content-Type here. Many callers use FormData and the browser
+    // must set the correct multipart boundary. Only include Authorization by default.
     return {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
+        Authorization: `Bearer ${token}`
     };
 };
 
@@ -201,8 +202,21 @@ export async function deleteUser(userId) {
 export async function getAllRooms() {
     try {
         const result = await api.get("/api/v1/rooms/all");
-        // API trả về { status, message, data: [room, ...] }
-        return result.data;
+        // Normalize response shape: some backend endpoints return
+        // - wrapped object: { status, message, data: [...] }
+        // - or raw array: [ ... ]
+        // We want to always return an object with a `data` array so callers
+        // can safely use `res.data`.
+        const serverData = result.data;
+        if (Array.isArray(serverData)) {
+            return { status: 200, message: 'OK', data: serverData };
+        }
+        if (serverData && Array.isArray(serverData.data)) {
+            return serverData; // already in { status, message, data } shape
+        }
+        // Fallback: try to extract data property or return empty array
+        const arr = serverData?.data ?? serverData ?? [];
+        return { status: 200, message: 'OK', data: Array.isArray(arr) ? arr : [] };
     } catch (error) {
         throw new Error("Error fetching rooms");
     }
@@ -218,6 +232,115 @@ export async function getAllHotels() {
     }
 }
 
+// Lấy danh sách phòng cho một khách sạn cụ thể
+export async function getRoomsByHotel(hotelId) {
+    try {
+        const res = await api.get(`/api/v1/hotels/${hotelId}/rooms`);
+        const serverData = res.data;
+        if (Array.isArray(serverData)) {
+            return { status: 200, message: 'OK', data: serverData };
+        }
+        if (serverData && Array.isArray(serverData.data)) {
+            return serverData;
+        }
+        const arr = serverData?.data ?? serverData ?? [];
+        return { status: 200, message: 'OK', data: Array.isArray(arr) ? arr : [] };
+    } catch (error) {
+        throw new Error(error.response?.data?.message || `Error fetching rooms for hotel ${hotelId}`);
+    }
+}
+
+// Get hotel by id (helper - uses /api/v1/hotels/all then find)
+export async function getHotelById(hotelId) {
+    try {
+        const all = await getAllHotels();
+        const list = all?.data ?? all ?? [];
+        return { status: 200, data: list.find(h => h.id === Number(hotelId)) };
+    } catch (error) {
+        throw new Error(error.response?.data?.message || `Error fetching hotel ${hotelId}`);
+    }
+}
+
+// Add new hotel (multipart/form-data, image optional)
+export async function addHotel(payload) {
+    try {
+        const form = new FormData();
+        if (payload.name) form.append('name', payload.name);
+        if (payload.location) form.append('location', payload.location);
+        if (payload.description) form.append('description', payload.description);
+        if (payload.starRating != null) form.append('starRating', payload.starRating);
+        if (payload.email) form.append('email', payload.email);
+        if (payload.phone) form.append('phone', payload.phone);
+        if (payload.contactName) form.append('contactName', payload.contactName);
+        if (payload.contactPhone) form.append('contactPhone', payload.contactPhone);
+        if (payload.isActive != null) form.append('isActive', payload.isActive);
+        // amenityIds as array
+        if (payload.amenityIds && Array.isArray(payload.amenityIds)) {
+            payload.amenityIds.forEach((id, idx) => form.append(`amenityIds[${idx}]`, id));
+        }
+        // Support multiple images for hotel (payload.images = array of File)
+        // Backend expects the parameter name `image` (see controller signature),
+        // so append files under the field name 'image' (multiple entries).
+        if (payload.images && Array.isArray(payload.images)) {
+            payload.images.forEach((file) => {
+                if (file instanceof File) {
+                    form.append('image', file);
+                }
+            });
+        } else if (payload.image && payload.image instanceof File) {
+            // legacy single image field
+            form.append('image', payload.image);
+        }
+        const res = await api.post('/api/v1/hotels/add', form, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || error.message || 'Error adding hotel');
+    }
+}
+
+// Update hotel (multipart/form-data)
+export async function updateHotel(hotelId, payload) {
+    try {
+        const form = new FormData();
+        if (payload.name) form.append('name', payload.name);
+        if (payload.location) form.append('location', payload.location);
+        if (payload.description) form.append('description', payload.description);
+        if (payload.starRating != null) form.append('starRating', payload.starRating);
+        if (payload.email) form.append('email', payload.email);
+        if (payload.phone) form.append('phone', payload.phone);
+        if (payload.contactName) form.append('contactName', payload.contactName);
+        if (payload.contactPhone) form.append('contactPhone', payload.contactPhone);
+        if (payload.isActive != null) form.append('isActive', payload.isActive);
+        if (payload.amenityIds && Array.isArray(payload.amenityIds)) {
+            payload.amenityIds.forEach((id, idx) => form.append(`amenityIds[${idx}]`, id));
+        }
+        // Support multiple images for hotel (payload.images = array of File)
+        if (payload.images && Array.isArray(payload.images)) {
+            payload.images.forEach((file) => {
+                if (file instanceof File) {
+                    form.append('image', file);
+                }
+            });
+        } else if (payload.image && payload.image instanceof File) {
+            form.append('image', payload.image);
+        }
+        const res = await api.put(`/api/v1/hotels/update/${hotelId}`, form, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || error.message || 'Error updating hotel');
+    }
+}
+
+// Delete a hotel
+export async function deleteHotel(hotelId) {
+    try {
+        const res = await api.delete(`/api/v1/hotels/delete/${hotelId}`, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || error.message || 'Error deleting hotel');
+    }
+}
+
 export async function getRoomById(roomId) {
     try {
         const result = await api.get(`/api/v1/rooms/${roomId}`);
@@ -227,12 +350,15 @@ export async function getRoomById(roomId) {
     }
 }
 
-/* This function adds a new room to the database */
 export async function addRoom(roomData) {
     try {
-        // Sử dụng FormData để gửi cả file và data
         const formData = new FormData();
-        formData.append('roomNumber', roomData.roomNumber);
+        
+        // Thêm hotelId
+        if (roomData.hotelId) {
+            formData.append('hotelId', roomData.hotelId);
+        }
+        
         formData.append('type', roomData.type);
         formData.append('price', roomData.price);
         formData.append('capacity', roomData.capacity);
@@ -240,26 +366,21 @@ export async function addRoom(roomData) {
         formData.append('name', roomData.name);
         formData.append('amount', roomData.amount);
         
-        // Thêm amenities nếu có
-        if (roomData.amenities && Array.isArray(roomData.amenities)) {
-            roomData.amenities.forEach((amenity, index) => {
-                // amenity may be an object (from API) or a primitive; append id if present
-                const value = (amenity && typeof amenity === 'object') ? (amenity.id ?? amenity.name ?? JSON.stringify(amenity)) : amenity;
-                formData.append(`amenities[${index}]`, value);
+        // Thêm amenityIds (integers, không phải objects)
+        if (roomData.amenityIds && Array.isArray(roomData.amenityIds)) {
+            roomData.amenityIds.forEach((id, index) => {
+                formData.append(`amenityIds[${index}]`, id);
             });
         }
         
-        // Thêm file nếu có - CHỈ thêm nếu file thực sự được chọn
+        // Thêm image file (backend yêu cầu 'image', không 'photo')
         if (roomData.photo && roomData.photo instanceof File) {
-            formData.append('photo', roomData.photo);
-            console.log('[ApiService] addRoom - photo file added:', roomData.photo.name);
-        } else {
-            console.log('[ApiService] addRoom - no photo file, sending without image');
+            formData.append('image', roomData.photo);
+            console.log('[ApiService] addRoom - image file added:', roomData.photo.name);
         }
         
         console.log('[ApiService] addRoom - sending FormData');
         
-        // Gửi FormData - KHÔNG set Content-Type, browser sẽ tự set với boundary
         const response = await api.post("/api/v1/rooms/add", formData);
         console.log('[ApiService] addRoom response:', response.data);
         return response.data;
@@ -295,9 +416,8 @@ export async function deleteRoom(roomId) {
 /* This function update a room */
 export async function updateRoom(roomId, roomData) {
     try {
-        // Sử dụng FormData để gửi cả file và data
         const formData = new FormData();
-        formData.append('roomNumber', roomData.roomNumber);
+        
         formData.append('type', roomData.type);
         formData.append('price', roomData.price);
         formData.append('capacity', roomData.capacity);
@@ -305,20 +425,20 @@ export async function updateRoom(roomId, roomData) {
         formData.append('name', roomData.name);
         formData.append('amount', roomData.amount);
         
-        // Thêm amenities nếu có
-        if (roomData.amenities && Array.isArray(roomData.amenities)) {
-            roomData.amenities.forEach((amenity, index) => {
-                formData.append(`amenities[${index}]`, amenity);
+        // Thêm amenityIds (integers, không phải objects)
+        if (roomData.amenityIds && Array.isArray(roomData.amenityIds)) {
+            roomData.amenityIds.forEach((id, index) => {
+                formData.append(`amenityIds[${index}]`, id);
             });
         }
         
         // CHỈ thêm file nếu file mới được chọn (instance of File)
         // Nếu user không chọn file mới, thì không gửi photo field
         if (roomData.photo && roomData.photo instanceof File) {
-            formData.append('photo', roomData.photo);
-            console.log('[ApiService] updateRoom - new photo file added:', roomData.photo.name);
+            formData.append('image', roomData.photo);
+            console.log('[ApiService] updateRoom - new image file added:', roomData.photo.name);
         } else {
-            console.log('[ApiService] updateRoom - no new photo file, keeping existing image');
+            console.log('[ApiService] updateRoom - no new image file, keeping existing image');
         }
         
         console.log('[ApiService] updateRoom - sending FormData for room', roomId);

@@ -1,15 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addRoom, getAllAmenities } from '../../../service/ApiService';
+import { addRoom, getAllAmenities, getAllHotels, getRoomsByHotel } from '../../../service/ApiService';
+import { useLocation } from 'react-router-dom';
 
 const AddRoomPage = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    // Parse numeric fields
+    let parsedValue = value;
+    if (name === 'hotelId' && value) {
+      parsedValue = parseInt(value, 10);
+    } else if (['roomNumber', 'price', 'capacity', 'amount'].includes(name) && value) {
+      parsedValue = name === 'price' ? parseFloat(value) : parseInt(value, 10);
+    }
+    setForm({ ...form, [name]: parsedValue });
   };
   const [form, setForm] = useState({
     hotelId: '',
-    roomNumber: '',
     name: '',
     description: '',
     type: 'SINGLE',
@@ -23,6 +30,11 @@ const AddRoomPage = () => {
   const [amenityOptions, setAmenityOptions] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedAmenity, setSelectedAmenity] = useState(null);
+  const [hotels, setHotels] = useState([]);
+  const location = useLocation();
+  const managedHotelId = location?.state?.hotelId;
+  const hotelName = location?.state?.hotelName;
+  const hotelRooms = location?.state?.rooms;
   const [photoPreview, setPhotoPreview] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -42,20 +54,29 @@ const AddRoomPage = () => {
     }
   };
 
-  // Fetch amenities for combobox on mount
+  // Fetch hotels and amenities on mount
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
-        const res = await getAllAmenities();
-        // res may be { status, message, data: [...] } or an array
-        const list = res?.data ?? res ?? [];
-        if (mounted) setAmenityOptions(Array.isArray(list) ? list : []);
+        // Load hotels
+        const hotelRes = await getAllHotels();
+        const hotelList = hotelRes?.data ?? hotelRes ?? [];
+        if (mounted) setHotels(Array.isArray(hotelList) ? hotelList : []);
+        
+        // Load amenities
+        const amenityRes = await getAllAmenities();
+        const amenityList = amenityRes?.data ?? amenityRes ?? [];
+        if (mounted) setAmenityOptions(Array.isArray(amenityList) ? amenityList : []);
       } catch (err) {
-        console.error('[AddRoomPage] Error loading amenities:', err);
+        console.error('[AddRoomPage] Error loading data:', err);
       }
     };
     load();
+      // if this page is opened for a specific hotel, prefill and lock
+      if (managedHotelId) {
+        setForm(prev => ({ ...prev, hotelId: Number(managedHotelId) }));
+      }
     return () => { mounted = false };
   }, []);
 
@@ -125,9 +146,9 @@ const AddRoomPage = () => {
     });
 
     // Validation
-    if (!form.roomNumber || !form.name || !form.price || !form.capacity || !form.amount) {
+    if (!form.hotelId || !form.name || !form.price || !form.capacity || !form.amount) {
       const missingFields = [];
-      if (!form.roomNumber) missingFields.push('Room Number');
+      if (!form.hotelId) missingFields.push('Hotel');
       if (!form.name) missingFields.push('Name');
       if (!form.price) missingFields.push('Price');
       if (!form.capacity) missingFields.push('Capacity');
@@ -144,24 +165,50 @@ const AddRoomPage = () => {
 
     setLoading(true);
     try {
+      // Extract amenity IDs from amenity objects
+      const amenityIds = form.amenities.map(amenity => 
+        (amenity && typeof amenity === 'object') ? amenity.id : null
+      ).filter(id => id !== null);
+
       const roomData = {
-        hotelId: form.hotelId,
+        hotelId: form.hotelId, // Already parsed to integer in handleChange
         roomNumber: form.roomNumber,
-        type: form.type, // String "SINGLE", "DOUBLE", etc.
+        type: form.type,
         price: form.price,
         capacity: form.capacity,
         description: form.description.trim(),
         name: form.name.trim(),
         amount: form.amount,
-        amenities: form.amenities,
-        photo: form.photo // File object or null
+        amenityIds: amenityIds,
+        photo: form.photo
       };
 
       console.log('[AddRoomPage] Sending roomData:', roomData);
       console.log('[AddRoomPage] Photo file:', form.photo);
       await addRoom(roomData);
-      setSuccess('Room added successfully! Redirecting...');
-      setTimeout(() => navigate('/admin/manage-rooms'), 1500);
+      setSuccess('Room added successfully! Refetching rooms...');
+      // If opened from a hotel context, refetch rooms from server and go back
+      // with updated list
+      const redirectDelay = setTimeout(async () => {
+        if (managedHotelId && hotelName) {
+          try {
+            const res = await getRoomsByHotel(managedHotelId);
+            const freshRooms = res.data || [];
+            navigate('/admin/manage-rooms', { 
+              state: { hotelId: managedHotelId, hotelName: hotelName, rooms: freshRooms } 
+            });
+          } catch (e) {
+            console.error('[AddRoomPage] Error refetching rooms:', e);
+            // fallback: navigate without rooms (ManageRoomPage will show error)
+            navigate('/admin/manage-rooms', { 
+              state: { hotelId: managedHotelId, hotelName: hotelName } 
+            });
+          }
+        } else {
+          navigate('/admin/manage-rooms');
+        }
+      }, 1500);
+      return () => clearTimeout(redirectDelay);
     } catch (err) {
       console.error('[AddRoomPage] Error:', err);
       setError(err.message || 'Error adding room');
@@ -176,28 +223,24 @@ const AddRoomPage = () => {
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">{success}</div>}
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4 max-w-2xl">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Hotel ID *</label>
-            <input 
-              type="number"
+            <label className="block text-sm font-medium mb-1">Hotel *</label>
+            <select 
               name="hotelId"
               value={form.hotelId}
               onChange={handleChange}
               className="w-full p-2 border rounded"
-              placeholder="e.g. 1"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Room Number *</label>
-            <input 
-              type="number"
-              name="roomNumber" 
-              value={form.roomNumber} 
-              onChange={handleChange} 
-              className="w-full p-2 border rounded"
-              placeholder="e.g. 101"
-            />
+              disabled={!!managedHotelId}
+            >
+              <option value="">-- Chọn khách sạn --</option>
+              {hotels.map(hotel => (
+                <option key={hotel.id} value={hotel.id}>
+                  {hotel.name} (ID: {hotel.id})
+                </option>
+              ))}
+            </select>
+            {managedHotelId && <div className="text-sm text-gray-500 mt-1">Đang quản lý khách sạn ID: {managedHotelId}</div>}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Room Name *</label>
@@ -298,8 +341,9 @@ const AddRoomPage = () => {
                 type="text"
                 value={amenityInput}
                 onChange={(e) => { setAmenityInput(e.target.value); setSelectedAmenity(null); setDropdownOpen(true); }}
+                onFocus={() => setDropdownOpen(true)}
                 onKeyPress={handleAmenityKeyPress}
-                placeholder="Search amenities (e.g. WiFi)"
+                placeholder="Search or select amenities"
                 className="flex-1 p-2 border rounded"
               />
               <button
@@ -311,21 +355,23 @@ const AddRoomPage = () => {
               </button>
             </div>
 
-            {/* Dropdown */}
-            {dropdownOpen && amenityInput && (
+            {/* Dropdown - show all options or filtered */}
+            {dropdownOpen && (
               <div className="absolute z-40 w-full bg-white border rounded shadow max-h-48 overflow-auto">
-                {amenityOptions.filter(a => a.name && a.name.toLowerCase().includes(amenityInput.toLowerCase())).length === 0 ? (
-                  <div className="p-2 text-sm text-gray-500">No amenities found</div>
+                {amenityOptions.length === 0 ? (
+                  <div className="p-2 text-sm text-gray-500">No amenities available</div>
                 ) : (
-                  amenityOptions.filter(a => a.name && a.name.toLowerCase().includes(amenityInput.toLowerCase())).map(opt => (
-                    <div
-                      key={opt.id}
-                      className="p-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => { setAmenityInput(opt.name); setSelectedAmenity(opt); setDropdownOpen(false); }}
-                    >
-                      {opt.name}
-                    </div>
-                  ))
+                  amenityOptions
+                    .filter(a => !amenityInput || (a.name && a.name.toLowerCase().includes(amenityInput.toLowerCase())))
+                    .map(opt => (
+                      <div
+                        key={opt.id}
+                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => { setAmenityInput(opt.name); setSelectedAmenity(opt); setDropdownOpen(false); }}
+                      >
+                        {opt.name}
+                      </div>
+                    ))
                 )}
               </div>
             )}
@@ -333,7 +379,7 @@ const AddRoomPage = () => {
           
           {/* Danh sách amenities đã thêm */}
           {form.amenities.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mt-3">
               {form.amenities.map((amenity, index) => {
                 const label = (amenity && typeof amenity === 'object') ? amenity.name : amenity;
                 return (

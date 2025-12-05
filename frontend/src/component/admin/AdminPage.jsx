@@ -31,6 +31,11 @@ const AdminPage = () => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Link to="/admin/manage-hotels" className="block p-6 bg-white rounded-lg shadow hover:shadow-md">
+          <h3 className="text-lg font-semibold mb-2">Quản lý khách sạn</h3>
+          <p className="text-sm text-gray-600">Xem danh sách khách sạn, thêm, chỉnh sửa, xóa và quản lý phòng/tiện nghi cho từng khách sạn.</p>
+        </Link>
+
         <Link to="/admin/manage-accounts" className="block p-6 bg-white rounded-lg shadow hover:shadow-md">
           <h3 className="text-lg font-semibold mb-2">Quản lý tài khoản</h3>
           <p className="text-sm text-gray-600">Xem và quản lý tài khoản người dùng (kích hoạt/vô hiệu hóa, thêm, chỉnh sửa, xóa).</p>
@@ -39,16 +44,6 @@ const AdminPage = () => {
         <Link to="/admin/manage-bookings" className="block p-6 bg-white rounded-lg shadow hover:shadow-md">
           <h3 className="text-lg font-semibold mb-2">Quản lý đặt phòng</h3>
           <p className="text-sm text-gray-600">Xem tất cả các đặt phòng, hủy đặt phòng và lọc các đặt phòng.</p>
-        </Link>
-
-        <Link to="/admin/manage-rooms" className="block p-6 bg-white rounded-lg shadow hover:shadow-md">
-          <h3 className="text-lg font-semibold mb-2">Quản lý phòng</h3>
-          <p className="text-sm text-gray-600">Thêm, chỉnh sửa, xóa phòng và thay đổi trạng thái phòng.</p>
-        </Link>
-
-        <Link to="/admin/manage-amenities" className="block p-6 bg-white rounded-lg shadow hover:shadow-md">
-          <h3 className="text-lg font-semibold mb-2">Quản lý tiện nghi</h3>
-          <p className="text-sm text-gray-600">Quản lý các tiện nghi khách sạn và phòng được sử dụng trên toàn hệ thống.</p>
         </Link>
       </div>
     </div>

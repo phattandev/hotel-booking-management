@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getAllRooms, deleteRoom } from '../../../service/ApiService';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { deleteRoom, getRoomsByHotel } from '../../../service/ApiService';
 
 const ManageRoomPage = () => {
   const [rooms, setRooms] = useState([]);
+  const [currentHotel, setCurrentHotel] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
@@ -11,15 +12,35 @@ const ManageRoomPage = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Fetch rooms from API
+  // Fetch rooms from navigation state (passed from AllHotelPage)
   const fetchRooms = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAllRooms();
-      // API trả về { status, message, data: [room, ...] }
-      setRooms(res.data || []);
+      // If a hotelId is present, prefer fetching rooms for that hotel from server
+      const hotelId = location?.state?.hotelId;
+      const roomsFromState = location?.state?.rooms;
+      if (hotelId) {
+        try {
+          const res = await getRoomsByHotel(hotelId);
+          setRooms(res.data || []);
+        } catch (e) {
+          // fallback to rooms from state if server call fails
+          if (roomsFromState && Array.isArray(roomsFromState)) {
+            setRooms(roomsFromState);
+          } else {
+            setError('Không thể tải phòng từ server. Vui lòng thử lại.');
+            setRooms([]);
+          }
+        }
+      } else if (roomsFromState && Array.isArray(roomsFromState)) {
+        setRooms(roomsFromState);
+      } else {
+        setError('Không có dữ liệu phòng. Vui lòng quay lại và chọn lại khách sạn.');
+        setRooms([]);
+      }
     } catch (err) {
       setError(err.message || 'Error fetching rooms');
       setRooms([]);
@@ -28,6 +49,10 @@ const ManageRoomPage = () => {
   };
 
   useEffect(() => {
+    // detect hotel context passed from ManageHotel page
+    const hotelId = location?.state?.hotelId;
+    const hotelName = location?.state?.hotelName;
+    if (hotelId) setCurrentHotel({ id: hotelId, name: hotelName });
     fetchRooms();
   }, []);
 
@@ -37,7 +62,13 @@ const ManageRoomPage = () => {
     setSelectedIds(next);
   };
 
-  const handleAdd = () => navigate('/admin/add-room');
+  const handleAdd = () => {
+    if (currentHotel) {
+      navigate('/admin/add-room', { state: { hotelId: currentHotel.id, hotelName: currentHotel.name } });
+    } else {
+      navigate('/admin/add-room');
+    }
+  };
 
   const handleEdit = () => {
     if (selectedIds.size !== 1) {
@@ -45,7 +76,12 @@ const ManageRoomPage = () => {
       return;
     }
     const id = Array.from(selectedIds)[0];
-    navigate(`/admin/edit-room/${id}`);
+    // preserve hotel context if present
+    if (currentHotel) {
+      navigate(`/admin/edit-room/${id}`, { state: { hotelId: currentHotel.id } });
+    } else {
+      navigate(`/admin/edit-room/${id}`);
+    }
   };
 
   const handleDeleteClick = () => {
@@ -65,7 +101,19 @@ const ManageRoomPage = () => {
         await deleteRoom(roomId);
       }
       setMessage(`Đã xóa ${selectedIds.size} phòng thành công.`);
-      setRooms(prev => prev.filter(r => !selectedIds.has(r.id)));
+      // After deletion, if we have a hotel context, refetch rooms; otherwise update local list
+      const hid = currentHotel ? Number(currentHotel.id) : null;
+      if (hid) {
+        try {
+          const res = await getRoomsByHotel(hid);
+          setRooms(res.data || []);
+        } catch (e) {
+          // fallback: remove locally
+          setRooms(prev => prev.filter(r => !selectedIds.has(r.id)));
+        }
+      } else {
+        setRooms(prev => prev.filter(r => !selectedIds.has(r.id)));
+      }
       setSelectedIds(new Set());
       setShowDeleteConfirm(false);
     } catch (err) {
@@ -80,8 +128,8 @@ const ManageRoomPage = () => {
 
   return (
     <div className="container mx-auto p-6 mt-20">
-      <h1 className="text-2xl font-bold mb-2">Quản lý phòng</h1>
-      <p className="text-gray-600 mb-4">Xem và quản lý tất cả các phòng trong hệ thống.</p>
+  <h1 className="text-2xl font-bold mb-2">Quản lý phòng{currentHotel ? ` - ${currentHotel.name || ('ID ' + currentHotel.id)}` : ''}</h1>
+  <p className="text-gray-600 mb-4">{currentHotel ? `Xem và quản lý các phòng của khách sạn: ${currentHotel.name || 'ID ' + currentHotel.id}` : 'Xem và quản lý tất cả các phòng trong hệ thống.'}</p>
 
       {message && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">
@@ -109,27 +157,28 @@ const ManageRoomPage = () => {
       <div className="bg-white rounded shadow overflow-hidden">
         {loading ? (
           <div className="p-4">Đang tải...</div>
-        ) : rooms.length === 0 ? (
-          <div className="p-4 text-gray-600">Không tìm thấy phòng nào. Sử dụng Thêm để tạo phòng mới.</div>
-        ) : (
-          <div className="overflow-x-auto">
+        ) : (() => {
+          const hid = currentHotel ? Number(currentHotel.id) : null;
+          // Simply display all rooms from location.state (already filtered for this hotel)
+          const displayed = rooms;
+          if (!displayed || displayed.length === 0) return (<div className="p-4 text-gray-600">Không tìm thấy phòng nào. Sử dụng Thêm để tạo phòng mới.</div>);
+          return (<div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-100 border-b">
                 <tr>
                   <th className="px-4 py-3 text-left">
                     <input 
                       type="checkbox" 
-                      checked={selectedIds.size === rooms.length && rooms.length > 0}
+                      checked={selectedIds.size === displayed.length && displayed.length > 0}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedIds(new Set(rooms.map(r => r.id)));
+                          setSelectedIds(new Set(displayed.map(r => r.id)));
                         } else {
                           setSelectedIds(new Set());
                         }
                       }}
                     />
                   </th>
-                  <th className="px-4 py-3 text-left">Phòng #</th>
                   <th className="px-4 py-3 text-left">Tên</th>
                   <th className="px-4 py-3 text-left">Loại</th>
                   <th className="px-4 py-3 text-left">Giá</th>
@@ -138,7 +187,7 @@ const ManageRoomPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {rooms.map(room => (
+                {displayed.map(room => (
                   <tr key={room.id} className="border-b hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <input 
@@ -147,7 +196,6 @@ const ManageRoomPage = () => {
                         onChange={() => toggleSelect(room.id)} 
                       />
                     </td>
-                    <td className="px-4 py-3">#{room.roomNumber}</td>
                     <td className="px-4 py-3">{room.name}</td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-1 text-xs font-semibold rounded bg-blue-100 text-blue-800">
@@ -161,8 +209,8 @@ const ManageRoomPage = () => {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
+          </div>);
+        })()}
       </div>
 
       {/* Delete Confirmation Modal */}

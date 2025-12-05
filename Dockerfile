@@ -10,11 +10,6 @@ RUN npm install
 # Copy toàn bộ code (bao gồm thư mục 'frontend' và các file config)
 COPY . .
 
-# Nhận biến môi trường (URL của backend) từ lệnh build
-ARG VITE_API_BASE_URL
-# Đặt nó làm biến môi trường cho lệnh build của Vite
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-
 # Chạy lệnh build (sẽ chạy "vite build" như trong package.json)
 # Vite sẽ tự động tìm code trong thư mục 'frontend' (dựa trên vite.config.js)
 RUN npm run build
