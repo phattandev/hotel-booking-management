@@ -229,9 +229,9 @@ const RoomDetailPage = () => {
                 <h1 className="text-3xl font-bold mb-2">{room.name}</h1>
                 
                 <div className="mb-3">
-                  <div className="text-sm text-gray-600">
+                  {/* <div className="text-sm text-gray-600">
                     <span className="font-semibold">Số phòng:</span> {room.roomNumber}
-                  </div>
+                  </div> */}
                   <div className="text-sm text-gray-600">
                     <span className="font-semibold">Loại phòng:</span>{' '}
                     <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
@@ -379,10 +379,10 @@ const RoomDetailPage = () => {
                             )}
                           </span>
                         </div>
-                        <div className="flex justify-between text-sm mb-1">
+                        {/* <div className="flex justify-between text-sm mb-1">
                           <span>Số phòng:</span>
                           <span className="font-semibold">{roomQuantity}</span>
-                        </div>
+                        </div> */}
                         <div className="flex justify-between text-lg font-bold border-t pt-2">
                           <span>Tổng cộng:</span>
                           <span className="text-green-600">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllHotels, deleteHotel } from '../../../service/ApiService';
+import { getAllHotels, deleteHotel, getHotelAmenitiesByHotel, getRoomAmenitiesByHotel } from '../../../service/ApiService';
 
 const AllHotelPage = () => {
   const [hotels, setHotels] = useState([]);
@@ -52,6 +52,10 @@ const AllHotelPage = () => {
 
   const [showManageModal, setShowManageModal] = useState(false);
   const [selectedForManage, setSelectedForManage] = useState(null);
+  const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+  const [hotelAmenitiesList, setHotelAmenitiesList] = useState([]);
+  const [roomAmenitiesList, setRoomAmenitiesList] = useState([]);
+  const [loadingAmenities, setLoadingAmenities] = useState(false);
 
   const openManageRooms = (hotel) => {
     setShowManageModal(false);
@@ -62,9 +66,41 @@ const AllHotelPage = () => {
   };
 
   const openManageAmenities = (hotel) => {
+    // Instead of navigating to global page, fetch and show this hotel's amenities
     setShowManageModal(false);
-    // ManageAmenitiesPage shows global amenities; pass hotel if needed in future
-    navigate('/admin/manage-amenities');
+    viewHotelAmenities(hotel);
+  };
+
+  const viewHotelAmenities = async (hotel) => {
+    if (!hotel || !hotel.id) return;
+    setLoadingAmenities(true);
+    setHotelAmenitiesList([]);
+    setRoomAmenitiesList([]);
+    setError(null);
+    try {
+      // fetch hotel-level amenities
+      const hRes = await getHotelAmenitiesByHotel(hotel.id);
+      const hList = hRes?.data ?? hRes ?? [];
+      // fetch room-level amenities grouped by room
+      const rRes = await getRoomAmenitiesByHotel(hotel.id);
+      const rList = rRes?.data ?? rRes ?? [];
+
+      // flatten room amenities and deduplicate by id
+      const flat = [];
+      for (const group of rList) {
+        const arr = group?.amenities ?? [];
+        for (const a of arr) {
+          if (!flat.find(x => x.id === a.id)) flat.push(a);
+        }
+      }
+
+      setHotelAmenitiesList(Array.isArray(hList) ? hList : []);
+      setRoomAmenitiesList(flat);
+      setShowAmenitiesModal(true);
+    } catch (err) {
+      setError(err.message || 'Lỗi lấy tiện nghi khách sạn');
+    }
+    setLoadingAmenities(false);
   };
 
   const handleDeleteClick = () => {
@@ -135,7 +171,7 @@ const AllHotelPage = () => {
                     <td className="px-4 py-3">{Array.isArray(h.rooms) ? h.rooms.length : (h.totalRooms ?? '-')}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <button onClick={() => navigate(`/admin/edit-hotel/${h.id}`)} className="px-3 py-1 bg-yellow-500 text-white rounded">Sửa</button>
+                        {/* <button onClick={() => navigate(`/admin/edit-hotel/${h.id}`)} className="px-3 py-1 bg-yellow-500 text-white rounded">Sửa</button> */}
                         <button onClick={() => handleManage(h)} className="px-3 py-1 bg-blue-600 text-white rounded">Quản lý</button>
                       </div>
                     </td>
@@ -166,8 +202,51 @@ const AllHotelPage = () => {
             <p className="text-gray-700 mb-4">Chọn chức năng để quản lý khách sạn này.</p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setShowManageModal(false)} className="px-4 py-2 bg-gray-200 rounded">Hủy</button>
-              <button onClick={() => openManageAmenities(selectedForManage)} className="px-4 py-2 bg-indigo-600 text-white rounded">Quản lý tiện nghi</button>
+              <button onClick={() => openManageAmenities(selectedForManage)} className="px-4 py-2 bg-indigo-600 text-white rounded">Xem tiện nghi</button>
               <button onClick={() => openManageRooms(selectedForManage)} className="px-4 py-2 bg-blue-600 text-white rounded">Quản lý phòng</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAmenitiesModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-3xl w-full">
+            <h2 className="text-lg font-bold mb-4">Tiện nghi của khách sạn: {selectedForManage?.name}</h2>
+            {loadingAmenities ? (
+              <div>Đang tải tiện nghi...</div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Tiện nghi khách sạn</h3>
+                  {hotelAmenitiesList.length === 0 ? (
+                    <div className="text-gray-600">Không có tiện nghi khách sạn.</div>
+                  ) : (
+                    <ul className="grid grid-cols-2 gap-2">
+                      {hotelAmenitiesList.map(a => (
+                        <li key={a.id} className="p-2 border rounded">{a.name} <span className="text-xs text-gray-500">({a.type})</span></li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Tiện nghi phòng (theo tất cả các phòng thuộc khách sạn)</h3>
+                  {roomAmenitiesList.length === 0 ? (
+                    <div className="text-gray-600">Không có tiện nghi phòng.</div>
+                  ) : (
+                    <ul className="grid grid-cols-2 gap-2">
+                      {roomAmenitiesList.map(a => (
+                        <li key={a.id} className="p-2 border rounded">{a.name} <span className="text-xs text-gray-500">({a.type})</span></li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button onClick={() => { setShowAmenitiesModal(false); setSelectedForManage(null); }} className="px-4 py-2 bg-gray-200 rounded">Đóng</button>
             </div>
           </div>
         </div>

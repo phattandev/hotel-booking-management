@@ -613,6 +613,54 @@ export async function getAllAmenities() {
     }
 }
 
+// System-level amenities management (create/update/delete across whole system)
+export async function createAmenity(payload) {
+    try {
+        const res = await api.post('/api/v1/amenities/create', payload, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error creating amenity');
+    }
+}
+
+export async function updateAmenity(id, payload) {
+    try {
+        const res = await api.put(`/api/v1/amenities/update/${id}`, payload, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error updating amenity');
+    }
+}
+
+export async function deleteAmenity(id) {
+    try {
+        const res = await api.delete(`/api/v1/amenities/delete/${id}`, { headers: getHeader() });
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error deleting amenity');
+    }
+}
+
+// Get hotel-specific amenities for a given hotel id
+export async function getHotelAmenitiesByHotel(hotelId) {
+    try {
+        const res = await api.get(`/api/v1/amenities/hotel/${hotelId}/hotel-amenities`);
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error fetching hotel amenities by hotel id');
+    }
+}
+
+// Get room amenities grouped by rooms for a given hotel id
+export async function getRoomAmenitiesByHotel(hotelId) {
+    try {
+        const res = await api.get(`/api/v1/amenities/hotel/${hotelId}/room-amenities`);
+        return res.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Error fetching room amenities by hotel id');
+    }
+}
+
 export async function addRoomAmenity(payload) {
     try {
         const res = await api.post('/api/v1/amenities/room/add', payload, { headers: getHeader() });

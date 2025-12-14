@@ -20,7 +20,9 @@ const AddHotelPage = () => {
       try {
         const res = await getAllAmenities();
         const list = res?.data ?? res ?? [];
-        setAmenities(Array.isArray(list) ? list : []);
+        // show only hotel-level amenities for hotel form
+        const arr = Array.isArray(list) ? list : [];
+        setAmenities(arr.filter(a => (a.type || '').toLowerCase().includes('hotel')));
       } catch (e) {
         // ignore
       }

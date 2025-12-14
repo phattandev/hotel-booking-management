@@ -64,10 +64,11 @@ const AddRoomPage = () => {
         const hotelList = hotelRes?.data ?? hotelRes ?? [];
         if (mounted) setHotels(Array.isArray(hotelList) ? hotelList : []);
         
-        // Load amenities
-        const amenityRes = await getAllAmenities();
-        const amenityList = amenityRes?.data ?? amenityRes ?? [];
-        if (mounted) setAmenityOptions(Array.isArray(amenityList) ? amenityList : []);
+  // Load amenities and show only room-level features for room form
+  const amenityRes = await getAllAmenities();
+  const amenityList = amenityRes?.data ?? amenityRes ?? [];
+  const arr = Array.isArray(amenityList) ? amenityList : [];
+  if (mounted) setAmenityOptions(arr.filter(a => (a.type || '').toLowerCase().includes('room')));
       } catch (err) {
         console.error('[AddRoomPage] Error loading data:', err);
       }

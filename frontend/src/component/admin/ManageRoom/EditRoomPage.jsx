@@ -46,10 +46,11 @@ const EditRoomPage = () => {
     let mounted = true;
     (async () => {
       try {
-        // Load amenities
-        const amenityRes = await getAllAmenities();
-        const amenityList = amenityRes?.data ?? amenityRes ?? [];
-        if (mounted) setAmenityOptions(Array.isArray(amenityList) ? amenityList : []);
+  // Load amenities and show only room-level features for room edit form
+  const amenityRes = await getAllAmenities();
+  const amenityList = amenityRes?.data ?? amenityRes ?? [];
+  const arr = Array.isArray(amenityList) ? amenityList : [];
+  if (mounted) setAmenityOptions(arr.filter(a => (a.type || '').toLowerCase().includes('room')));
 
         // Lấy danh sách phòng và tìm phòng theo ID
         const res = await getAllRooms();

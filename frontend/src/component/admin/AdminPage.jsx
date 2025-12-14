@@ -31,9 +31,13 @@ const AdminPage = () => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Link to="/admin/manage-all-amenities" className="block p-6 bg-white rounded-lg shadow hover:shadow-md">
+          <h3 className="text-lg font-semibold mb-2">Quản lý tất cả tiện nghi</h3>
+          <p className="text-sm text-gray-600">Xem và quản lý tất cả tiện nghi trong hệ thống — bao gồm thêm, chỉnh sửa và xóa tiện nghi.</p>
+        </Link>
         <Link to="/admin/manage-hotels" className="block p-6 bg-white rounded-lg shadow hover:shadow-md">
           <h3 className="text-lg font-semibold mb-2">Quản lý khách sạn</h3>
-          <p className="text-sm text-gray-600">Xem danh sách khách sạn, thêm, chỉnh sửa, xóa và quản lý phòng/tiện nghi cho từng khách sạn.</p>
+          <p className="text-sm text-gray-600">Xem danh sách khách sạn, thêm, chỉnh sửa, xóa và quản lý phòng cho từng khách sạn.</p>
         </Link>
 
         <Link to="/admin/manage-accounts" className="block p-6 bg-white rounded-lg shadow hover:shadow-md">

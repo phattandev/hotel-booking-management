@@ -41,7 +41,9 @@ const EditHotelPage = () => {
       try {
         const res2 = await getAllAmenities();
         const list2 = res2?.data ?? res2 ?? [];
-        if (mounted) setAmenities(Array.isArray(list2) ? list2 : []);
+        const arr2 = Array.isArray(list2) ? list2 : [];
+        // show only hotel-level amenities for hotel edit form
+        if (mounted) setAmenities(arr2.filter(a => (a.type || '').toLowerCase().includes('hotel')));
       } catch (e) {
         // ignore
       }
