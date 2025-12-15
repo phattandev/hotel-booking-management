@@ -8,7 +8,7 @@ const ManageAllAmenitiesSystem = () => {
     const [message, setMessage] = useState(null);
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
-    const [pendingAction, setPendingAction] = useState(null); // 'create'|'update'|'delete'
+    const [pendingAction, setPendingAction] = useState(null); // 'tạo'|'cập nhật'|'xóa'
     const [pendingPayload, setPendingPayload] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -22,7 +22,7 @@ const ManageAllAmenitiesSystem = () => {
             const list = res?.data ?? res ?? [];
             setItems(Array.isArray(list) ? list : []);
         } catch (err) {
-            setError(err.message || 'Error fetching amenities');
+            setError(err.message || 'Lỗi tải danh sách tiện nghi');
             setItems([]);
         }
         setLoading(false);
@@ -30,7 +30,7 @@ const ManageAllAmenitiesSystem = () => {
 
     useEffect(() => { fetchAll(); }, []);
 
-    // single-select behavior: only one amenity can be selected at a time
+    // Chế độ chọn một: mỗi lần chỉ được chọn một tiện nghi
     const toggleSelect = (id) => {
         const next = new Set();
         if (!selectedIds.has(id)) next.add(id);
@@ -47,7 +47,7 @@ const ManageAllAmenitiesSystem = () => {
         setShowForm(true);
     };
 
-    // open confirm dialog to delete selected amenity (single-select enforced)
+    // Mở hộp thoại xác nhận để xóa tiện nghi đã chọn (chỉ cho chọn một)
     const handleDelete = () => {
         if (selectedIds.size !== 1) { setMessage('Vui lòng chọn đúng một tiện nghi để xóa.'); return; }
         setError(null);
@@ -58,9 +58,9 @@ const ManageAllAmenitiesSystem = () => {
     };
 
     const submit = async (e) => {
-        e.preventDefault();
-        setError(null);
-        // instead of performing immediately, open confirmation modal for save
+    e.preventDefault();
+    setError(null);
+    // Mở hộp thoại xác nhận trước khi lưu
         const payload = { name: form.name, type: form.type };
         if (editing) {
             setPendingAction('update');
@@ -72,7 +72,7 @@ const ManageAllAmenitiesSystem = () => {
         setConfirmOpen(true);
     };
 
-    // called when user confirms an action in the confirm dialog
+    // Gọi khi người dùng xác nhận hành động trong hộp thoại xác nhận
     const performPending = async () => {
         setConfirmOpen(false);
         setError(null);
@@ -99,7 +99,7 @@ const ManageAllAmenitiesSystem = () => {
                 setShowForm(false);
             }
 
-            // reload list after any action
+            // Tải lại danh sách sau khi thực hiện hành động
             await fetchAll();
             setPendingAction(null);
             setPendingPayload(null);
@@ -158,8 +158,8 @@ const ManageAllAmenitiesSystem = () => {
                         <input required value={form.name} onChange={e=>setForm(f=>({...f, name: e.target.value}))} className="w-full mb-3 p-2 border rounded" />
                         <label className="block mb-2">Loại</label>
                         <select value={form.type} onChange={e=>setForm(f=>({...f, type: e.target.value}))} className="w-full mb-3 p-2 border rounded">
-                            <option>Hotel Service</option>
-                            <option>Room Feature</option>
+                            <option value="Hotel Service">Dịch vụ khách sạn</option>
+                            <option value="Room Feature">Tính năng phòng</option>
                         </select>
 
                         <div className="flex justify-end gap-3">
@@ -170,7 +170,7 @@ const ManageAllAmenitiesSystem = () => {
                 </div>
             )}
 
-            {/* Confirmation dialog for create/update/delete */}
+            {/* Hộp thoại xác nhận cho thêm/sửa/xóa */}
             {confirmOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">

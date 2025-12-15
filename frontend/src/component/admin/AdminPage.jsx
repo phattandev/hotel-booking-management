@@ -15,7 +15,7 @@ const AdminPage = () => {
           setAdminName(res.data.fullname);
         }
       } catch (e) {
-        // ignore - profile may not be available in dev
+        // admin sẽ không có hồ sơ người dùng
       }
     })();
     return () => { mounted = false };

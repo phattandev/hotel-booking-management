@@ -38,7 +38,7 @@ const ManageBookingPage = () => {
     return () => { mounted = false };
   }, []);
 
-  // Search by confirmation code (calls backend endpoint)
+  // Tìm theo mã xác nhận (gọi endpoint backend)
   const handleSearch = async (e) => {
     e?.preventDefault?.();
     if (!searchCode) {
@@ -64,7 +64,7 @@ const ManageBookingPage = () => {
     }
   };
 
-  // Cancel booking with confirmation
+  // Hủy đặt phòng bằng hộp thoại xác nhận
   const handleCancelClick = (bookingId) => {
     setSelectedBookingId(bookingId);
     setCancelReason('');
@@ -114,7 +114,7 @@ const ManageBookingPage = () => {
     setCancelReason('');
   };
 
-  // Handle status dropdown change
+  // Xử lý thay đổi trạng thái từ dropdown
   const handleStatusChange = async (booking, newStatus) => {
     if (!booking) return;
     
@@ -123,16 +123,22 @@ const ManageBookingPage = () => {
       return;
     }
     
-    // If admin chooses CANCELLED, show cancel reason modal
+    // Nếu admin chọn CANCELLED, hiển thị modal nhập lý do hủy
     if (newStatus === 'CANCELLED') {
       setSelectedBookingId(booking.id);
       setCancelReason('');
       setShowCancelConfirm(true);
       return;
     }
-    // Otherwise, show status confirmation modal
+    // Nếu không, hiển thị hộp thoại xác nhận thay đổi trạng thái
     setPendingStatusChange({ booking, newStatus });
     setShowStatusConfirm(true);
+  };
+
+  // Hàm xử lý khi xác nhận thay đổi trạng thái
+  const statusLabel = (s) => {
+    if (!s) return '';
+    return s === 'BOOKED' ? 'Đã đặt' : s === 'CANCELLED' ? 'Đã hủy' : s === 'CHECKED_IN' ? 'Đã nhận phòng' : s === 'CHECKED_OUT' ? 'Đã trả phòng' : s;
   };
 
   const handleStatusConfirm = async () => {
@@ -156,7 +162,7 @@ const ManageBookingPage = () => {
       const updated = res?.data ?? res;
       setBookings(prev => prev.map(b => (b.id === booking.id ? (updated || { ...b, status: newStatus }) : b)));
       setFilteredBookings(prev => prev.map(b => (b.id === booking.id ? (updated || { ...b, status: newStatus }) : b)));
-      setMessage(`Cập nhật trạng thái booking #${booking.id} thành ${newStatus} thành công.`);
+      setMessage(`Cập nhật trạng thái booking #${booking.id} thành ${statusLabel(newStatus)} thành công.`);
     } catch (err) {
       console.error('Update status error', err);
       setMessage(err.message || 'Lỗi khi cập nhật trạng thái.');
@@ -173,7 +179,7 @@ const ManageBookingPage = () => {
     setPendingStatusChange(null);
   };
 
-  // View cancel reason
+  // Xem lý do hủy
   const handleViewCancelReason = (reason) => {
     setSelectedCancelReason(reason || 'Không có lý do');
     setShowCancelReasonModal(true);
@@ -195,7 +201,7 @@ const ManageBookingPage = () => {
         </div>
       )}
 
-      {/* Controls: Search Section */}
+  {/* Điều khiển: Phần tìm kiếm */}
       <div className="mb-6 p-4 bg-gray-50 rounded">
         <form onSubmit={handleSearch} className="flex items-center gap-2">
           <input
@@ -213,7 +219,7 @@ const ManageBookingPage = () => {
         </form>
       </div>
 
-      {/* Bookings List */}
+  {/* Danh sách đặt phòng */}
       <div className="bg-white rounded shadow">
         {loading ? (
           <div className="p-4">Đang tải...</div>
@@ -253,10 +259,10 @@ const ManageBookingPage = () => {
                           onChange={(e) => handleStatusChange(booking, e.target.value)}
                           className="px-2 py-1 border rounded"
                         >
-                          <option value="BOOKED">BOOKED</option>
-                          <option value="CHECKED_IN">CHECKED_IN</option>
-                          <option value="CHECKED_OUT">CHECKED_OUT</option>
-                          <option value="CANCELLED">CANCELLED</option>
+                          <option value="BOOKED">Đã đặt</option>
+                          <option value="CHECKED_IN">Đã nhận phòng</option>
+                          <option value="CHECKED_OUT">Đã trả phòng</option>
+                          <option value="CANCELLED">Đã hủy</option>
                         </select>
                         {booking.status === 'BOOKED' && (
                           <button
@@ -284,13 +290,13 @@ const ManageBookingPage = () => {
         )}
       </div>
 
-      {/* Status Change Confirmation Modal */}
+  {/* Hộp thoại xác nhận thay đổi trạng thái */}
       {showStatusConfirm && pendingStatusChange && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">
             <h2 className="text-lg font-bold mb-4">Xác nhận thay đổi trạng thái</h2>
             <p className="text-gray-700 mb-6">
-              Bạn có chắc chắn muốn thay đổi trạng thái booking <strong>#{pendingStatusChange.booking.id}</strong> thành <strong>{pendingStatusChange.newStatus}</strong>?
+              Bạn có chắc chắn muốn thay đổi trạng thái booking <strong>#{pendingStatusChange.booking.id}</strong> thành <strong>{statusLabel(pendingStatusChange.newStatus)}</strong>?
             </p>
             
             {pendingStatusChange.newStatus === 'CHECKED_IN' && (
@@ -325,7 +331,7 @@ const ManageBookingPage = () => {
         </div>
       )}
 
-      {/* Cancel Confirmation Modal */}
+      {/* Form xác nhận xóa phòng */}
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">
@@ -359,7 +365,7 @@ const ManageBookingPage = () => {
         </div>
       )}
 
-      {/* View Cancel Reason Modal */}
+      {/* Form điền lý do hủy đặt phòng */}
       {showCancelReasonModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">

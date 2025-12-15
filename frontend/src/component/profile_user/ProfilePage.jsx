@@ -37,7 +37,7 @@ const ProfilePage = () => {
         dob: res.data.dob || '',
       });
     } catch (e) {
-      setErr(e.message || 'Error loading profile');
+      setErr(e.message || 'Lỗi khi tải thông tin người dùng');
     }
     setProfileLoading(false);
   };
@@ -59,35 +59,35 @@ const ProfilePage = () => {
     setMsg('');
     setErr('');
     try {
-      // Validation
+      // Xác thực dữ liệu đầu vào
       if (!form.fullName.trim()) {
-        setErr('Full name is required.');
+        setErr('Họ và tên là bắt buộc.');
         return;
       }
       if (form.fullName.trim().length > 40) {
-        setErr('Full name must be less than 40 characters.');
+        setErr('Họ và tên phải ít hơn 40 ký tự.');
         return;
       }
       if (!form.phone.trim()) {
-        setErr('Phone number is required.');
+        setErr('Số điện thoại là bắt buộc.');
         return;
       }
       const phoneRegex = /^\d{10,12}$/;
       if (!phoneRegex.test(form.phone.trim())) {
-        setErr('Phone number must be between 10 and 12 digits.');
+        setErr('Số điện thoại phải gồm từ 10 đến 12 chữ số.');
         return;
       }
       if (!form.dob) {
-        setErr('Date of birth is required.');
+        setErr('Ngày sinh là bắt buộc.');
         return;
       }
       const dobDate = new Date(form.dob);
       if (dobDate >= new Date()) {
-        setErr('Date of birth must be in the past.');
+        setErr('Ngày sinh phải là ngày trong quá khứ.');
         return;
       }
 
-      // Always send all required fields (fullName, phone, dob are required by backend)
+      // Luông gửi tất cả các trường bắt buộc (fullName, phone, dob là bắt buộc theo backend)
       const payload = {
         fullName: form.fullName.trim(),
         phone: form.phone.trim(),
@@ -96,34 +96,34 @@ const ProfilePage = () => {
       const res = await updateUserProfile(payload);
       console.log('[ProfilePage] Profile updated:', res.data);
       setProfile(res.data);
-      setMsg('Profile updated successfully.');
+      setMsg('Cập nhật hồ sơ thành công.');
       setEdit(false);
     } catch (e) {
       const backendMsg = e.response?.data?.message || e.response?.data?.error || e.message;
-      setErr(backendMsg || 'Error updating profile');
+      setErr(backendMsg || 'Lỗi khi cập nhật hồ sơ');
     }
   };
 
-  // Password change logic
+  // Login xử lý thay đổi mật khẩu
   const handlePwChange = async (e) => {
     e.preventDefault();
     setMsg('');
     setErr('');
     const { currentPassword, newPassword, confirmPassword } = pwForm;
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setErr('Please fill in all password fields.');
+      setErr('Vui lòng điền đầy đủ các trường mật khẩu.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      setErr('New password and confirmation do not match.');
+      setErr('Mật khẩu mới và xác nhận không khớp.');
       return;
     }
     if (newPassword.length < 6) {
-      setErr('New password must be at least 6 characters.');
+      setErr('Mật khẩu mới phải có ít nhất 6 ký tự.');
       return;
     }
     if (newPassword === currentPassword) {
-      setErr('New password must be different from current password.');
+      setErr('Mật khẩu mới phải khác mật khẩu hiện tại.');
       return;
     }
     setPwLoading(true);
@@ -132,7 +132,7 @@ const ProfilePage = () => {
         oldPassword: currentPassword,
         newPassword
       }, { headers: getHeader() });
-      setMsg('Password changed successfully. Please log in again.');
+      setMsg('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.');
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setTimeout(() => {
         logout();
@@ -141,12 +141,12 @@ const ProfilePage = () => {
     } catch (e) {
       // Hiển thị lỗi chi tiết từ backend nếu có
       const backendMsg = e.response?.data?.message || e.response?.data?.error || e.message;
-      setErr(backendMsg || 'Error changing password');
+      setErr(backendMsg || 'Lỗi khi đổi mật khẩu');
     }
     setPwLoading(false);
   };
 
-  if (profileLoading) return <div className="container mx-auto p-6 mt-20">Loading...</div>;
+  if (profileLoading) return <div className="container mx-auto p-6 mt-20">Đang tải...</div>;
 
   return (
     <div className="container mx-auto p-6 mt-20 max-w-xl">
@@ -181,7 +181,7 @@ const ProfilePage = () => {
           </div>
         </form>
       )}
-      {/* Password change form */}
+      {/* Form đổi mật khẩu */}
       <form onSubmit={handlePwChange} className="bg-white rounded shadow p-6">
         <h2 className="text-lg font-bold mb-4">Thay đổi mật khẩu</h2>
         <div className="mb-4">

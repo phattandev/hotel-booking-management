@@ -101,7 +101,7 @@ const RoomDetailPage = () => {
 
       const response = await bookRoom(bookingData);
       
-      // Calculate total price and nights for result page
+      // Tính toán tổng giá và các thông tin cần thiết cho trang kết quả
       const nights = Math.ceil(
         (new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24)
       );
@@ -127,10 +127,10 @@ const RoomDetailPage = () => {
         bookingDate: new Date().toISOString()
       };
       
-      // Redirect to booking result page with data
+      // Tải về trang kết quả đặt phòng với dữ liệu
       navigate('/booking-result', { state: { booking: bookingResult } });
     } catch (err) {
-      setBookingError(err.message || 'Error creating booking');
+      setBookingError(err.message || 'Lỗi khi tạo đặt phòng');
     } finally {
       setBookingLoading(false);
     }
@@ -153,7 +153,7 @@ const RoomDetailPage = () => {
     return <div className="pt-24 text-center text-gray-600">Không tìm thấy phòng</div>;
   }
 
-  // Modal component for login confirmation
+  // Form xác nhận chuyển đến trang đăng nhập
   const LoginModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -195,9 +195,9 @@ const RoomDetailPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
             {/* Left: Images and Info */}
             <div>
-              {/* Room Image */}
+              {/* Ảnh phòng */}
               <div className="mb-4 bg-gray-200 rounded overflow-hidden relative h-96">
-                {/* Room image carousel */}
+                {/* Carousel ảnh phòng */}
                 {room.roomImages && room.roomImages.length > 0 ? (
                   <>
                     <img
@@ -224,14 +224,11 @@ const RoomDetailPage = () => {
                 )}
               </div>
 
-              {/* Room Basic Info */}
+              {/* Thông tin cơ bản của phòng */}
               <div className="mb-4 p-4 bg-gray-50 rounded">
                 <h1 className="text-3xl font-bold mb-2">{room.name}</h1>
                 
                 <div className="mb-3">
-                  {/* <div className="text-sm text-gray-600">
-                    <span className="font-semibold">Số phòng:</span> {room.roomNumber}
-                  </div> */}
                   <div className="text-sm text-gray-600">
                     <span className="font-semibold">Loại phòng:</span>{' '}
                     <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
@@ -255,7 +252,7 @@ const RoomDetailPage = () => {
                 </div>
               </div>
 
-              {/* Amenities */}
+              {/* Tiện nghi */}
               {room.amenities && room.amenities.length > 0 && (
                 <div className="p-4 bg-gray-50 rounded">
                   <h2 className="text-lg font-bold mb-3">Tiện nghi phòng</h2>
@@ -273,7 +270,7 @@ const RoomDetailPage = () => {
               )}
             </div>
 
-            {/* Right: Booking Form */}
+            {/* Giao diện bên phải: Form đặt phòng */}
             <div>
               <div className="p-6 bg-gray-50 rounded sticky top-24">
                 <h2 className="text-2xl font-bold mb-4">Đặt phòng</h2>
@@ -285,7 +282,7 @@ const RoomDetailPage = () => {
                 )}
 
                 <form onSubmit={handleBooking} className="space-y-4">
-                  {/* Check-in Date */}
+                  {/* Ngày nhận phòng */}
                   <div>
                     <label className="block text-sm font-semibold mb-1">Ngày nhận phòng</label>
                     <input
@@ -298,7 +295,7 @@ const RoomDetailPage = () => {
                     />
                   </div>
 
-                  {/* Check-out Date */}
+                  {/* Ngày trả phòng */}
                   <div>
                     <label className="block text-sm font-semibold mb-1">Ngày trả phòng</label>
                     <input
@@ -311,7 +308,7 @@ const RoomDetailPage = () => {
                     />
                   </div>
 
-                  {/* Adult Amount */}
+                  {/* Số lượng người lớn */}
                   <div>
                     <label className="block text-sm font-semibold mb-1">Số người lớn</label>
                     <input
@@ -324,7 +321,7 @@ const RoomDetailPage = () => {
                     />
                   </div>
 
-                  {/* Children Amount */}
+                  {/* Số lượng trẻ em */}
                   <div>
                     <label className="block text-sm font-semibold mb-1">Số trẻ em</label>
                     <input
@@ -336,7 +333,7 @@ const RoomDetailPage = () => {
                     />
                   </div>
 
-                  {/* Room Quantity */}
+                  {/* Số lượng phòng */}
                   <div>
                     <label className="block text-sm font-semibold mb-1">Số lượng phòng</label>
                     <input
@@ -351,7 +348,7 @@ const RoomDetailPage = () => {
                     <p className="text-xs text-gray-600 mt-1">Còn trống: {room.amount} phòng</p>
                   </div>
 
-                  {/* Special Requests */}
+                  {/* Yêu cầu đặt biệt */}
                   <div>
                     <label className="block text-sm font-semibold mb-1">Yêu cầu đặc biệt (Tùy chọn)</label>
                     <textarea
@@ -363,7 +360,7 @@ const RoomDetailPage = () => {
                     />
                   </div>
 
-                  {/* Price Summary */}
+                  {/* Tổng giá */}
                   <div className="border-t pt-3 mt-4">
                     {checkInDate && checkOutDate && new Date(checkOutDate) > new Date(checkInDate) && (
                       <div className="mb-3">
@@ -379,10 +376,6 @@ const RoomDetailPage = () => {
                             )}
                           </span>
                         </div>
-                        {/* <div className="flex justify-between text-sm mb-1">
-                          <span>Số phòng:</span>
-                          <span className="font-semibold">{roomQuantity}</span>
-                        </div> */}
                         <div className="flex justify-between text-lg font-bold border-t pt-2">
                           <span>Tổng cộng:</span>
                           <span className="text-green-600">
@@ -399,7 +392,7 @@ const RoomDetailPage = () => {
                     )}
                   </div>
 
-                  {/* Booking Button */}
+                  {/* Nút đặt phòng */}
                   <button
                     type="submit"
                     disabled={bookingLoading || room.amount === 0}

@@ -14,12 +14,23 @@ const ManageRoomPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Fetch rooms from navigation state (passed from AllHotelPage)
+  // Chuyển mã loại phòng nội bộ sang nhãn tiếng Việt (chỉ để hiển thị)
+  const typeLabel = (t) => {
+    switch ((t || '').toString()) {
+      case 'SINGLE': return 'Đơn';
+      case 'DOUBLE': return 'Đôi';
+      case 'SUIT': return 'Suite';
+      case 'TRIPLE': return 'Ba người';
+      default: return t || '';
+    }
+  };
+
+  // Lấy danh sách phòng từ trạng thái điều hướng (được truyền từ AllHotelPage)
   const fetchRooms = async () => {
     setLoading(true);
     setError(null);
     try {
-      // If a hotelId is present, prefer fetching rooms for that hotel from server
+      // Nếu có hotelId, ưu tiên gọi server lấy phòng của khách sạn đó
       const hotelId = location?.state?.hotelId;
       const roomsFromState = location?.state?.rooms;
       if (hotelId) {
@@ -27,7 +38,7 @@ const ManageRoomPage = () => {
           const res = await getRoomsByHotel(hotelId);
           setRooms(res.data || []);
         } catch (e) {
-          // fallback to rooms from state if server call fails
+          // phương án dự phòng: dùng rooms từ state nếu gọi server thất bại
           if (roomsFromState && Array.isArray(roomsFromState)) {
             setRooms(roomsFromState);
           } else {
@@ -42,14 +53,14 @@ const ManageRoomPage = () => {
         setRooms([]);
       }
     } catch (err) {
-      setError(err.message || 'Error fetching rooms');
+      setError(err.message || 'Lỗi khi tải phòng');
       setRooms([]);
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    // detect hotel context passed from ManageHotel page
+    // phát hiện ngữ cảnh khách sạn được truyền từ trang ManageHotel
     const hotelId = location?.state?.hotelId;
     const hotelName = location?.state?.hotelName;
     if (hotelId) setCurrentHotel({ id: hotelId, name: hotelName });
@@ -96,19 +107,19 @@ const ManageRoomPage = () => {
     setActionLoading(true);
     setError(null);
     try {
-      // Delete all selected rooms
+      // Xóa tất cả các phòng đã chọn
       for (const roomId of selectedIds) {
         await deleteRoom(roomId);
       }
       setMessage(`Đã xóa ${selectedIds.size} phòng thành công.`);
-      // After deletion, if we have a hotel context, refetch rooms; otherwise update local list
+      // Sau khi xóa, nếu có ngữ cảnh khách sạn thì lấy lại danh sách phòng; nếu không thì cập nhật local
       const hid = currentHotel ? Number(currentHotel.id) : null;
       if (hid) {
         try {
           const res = await getRoomsByHotel(hid);
           setRooms(res.data || []);
         } catch (e) {
-          // fallback: remove locally
+          // dự phòng: loại bỏ cục bộ
           setRooms(prev => prev.filter(r => !selectedIds.has(r.id)));
         }
       } else {
@@ -198,8 +209,8 @@ const ManageRoomPage = () => {
                     </td>
                     <td className="px-4 py-3">{room.name}</td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-1 text-xs font-semibold rounded bg-blue-100 text-blue-800">
-                        {room.type}
+                        <span className="px-2 py-1 text-xs font-semibold rounded bg-blue-100 text-blue-800">
+                        {typeLabel(room.type)}
                       </span>
                     </td>
                     <td className="px-4 py-3">{room.price?.toLocaleString()} ₫</td>

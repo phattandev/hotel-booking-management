@@ -20,26 +20,21 @@ const AddHotelPage = () => {
       try {
         const res = await getAllAmenities();
         const list = res?.data ?? res ?? [];
-        // show only hotel-level amenities for hotel form
+        // chỉ hiển thị những tiện nghi cấp khách sạn cho form thêm khách sạn
         const arr = Array.isArray(list) ? list : [];
         setAmenities(arr.filter(a => (a.type || '').toLowerCase().includes('hotel')));
       } catch (e) {
-        // ignore
+        // bỏ qua lỗi tải tiện nghi
       }
     })();
   }, []);
 
-  // Image handling (commented out for now — backend DTO currently doesn't accept images)
-  // const handleImage = (e) => {
-  //   const file = e.target.files?.[0];
-  //   if (file) setForm(f => ({ ...f, image: file }));
-  // };
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       setForm(f => ({ ...f, images: files }));
-      // build previews
-      const previews = files.map(file => URL.createObjectURL(file));
+  // tạo preview ảnh
+  const previews = files.map(file => URL.createObjectURL(file));
       setImagePreviews(previews);
     } else {
       setForm(f => ({ ...f, images: [] }));
@@ -123,7 +118,7 @@ const AddHotelPage = () => {
             <input name="phone" value={form.phone} onChange={handleChange} className="w-full p-2 border rounded" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Active</label>
+            <label className="block text-sm font-medium mb-1">Hoạt động</label>
             <input type="checkbox" name="isActive" checked={!!form.isActive} onChange={handleChange} />
           </div>
         </div>
@@ -163,8 +158,8 @@ const AddHotelPage = () => {
         </div>
 
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={() => navigate('/admin/manage-hotels')} className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-          <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded">{loading ? 'Saving...' : 'Save'}</button>
+          <button type="button" onClick={() => navigate('/admin/manage-hotels')} className="px-4 py-2 bg-gray-200 rounded">Hủy</button>
+          <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded">{loading ? 'Đang lưu...' : 'Lưu'}</button>
         </div>
       </form>
     </div>

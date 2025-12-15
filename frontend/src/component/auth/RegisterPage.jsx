@@ -91,7 +91,7 @@ const RegisterPage = () => {
         } catch (error) {
             setSuccessMessage("");
             if (error.response && error.response.data && error.response.data.message) {
-                // If backend message exists we prefer to show it (could be already localized)
+                // Nếu backend trả về message, ưu tiên hiển thị lỗi đó
                 setErrorMessage(error.response.data.message);
             } else {
                 setErrorMessage(`Lỗi đăng ký: ${error.message}`);

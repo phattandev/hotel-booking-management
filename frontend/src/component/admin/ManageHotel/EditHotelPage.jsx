@@ -36,17 +36,15 @@ const EditHotelPage = () => {
           } : null);
         }
       } catch (err) {
-        setError(err.message || 'Error loading hotel');
+        setError(err.message || 'Lỗi tải khách sạn');
       }
       try {
         const res2 = await getAllAmenities();
         const list2 = res2?.data ?? res2 ?? [];
         const arr2 = Array.isArray(list2) ? list2 : [];
-        // show only hotel-level amenities for hotel edit form
+        // chỉ hiển thị tiện nghi ở mức khách sạn cho form chỉnh sửa
         if (mounted) setAmenities(arr2.filter(a => (a.type || '').toLowerCase().includes('hotel')));
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
       setLoading(false);
     };
     load();
@@ -131,7 +129,7 @@ const EditHotelPage = () => {
             <input name="phone" value={form.phone} onChange={handleChange} className="w-full p-2 border rounded" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Active</label>
+            <label className="block text-sm font-medium mb-1">Hoạt động</label>
             <input type="checkbox" name="isActive" checked={!!form.isActive} onChange={handleChange} />
           </div>
         </div>
@@ -154,8 +152,8 @@ const EditHotelPage = () => {
         </div>
 
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={() => navigate('/admin/manage-hotels')} className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-          <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'Saving...' : 'Save'}</button>
+          <button type="button" onClick={() => navigate('/admin/manage-hotels')} className="px-4 py-2 bg-gray-200 rounded">Hủy</button>
+          <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'Đang lưu...' : 'Lưu'}</button>
         </div>
       </form>
     </div>

@@ -23,7 +23,7 @@ const FindBookingPage = () => {
 	const [showConfirmCancel, setShowConfirmCancel] = useState(false);
 	const [cancelling, setCancelling] = useState(false);
 
-	// Check authentication on mount
+	// Kiểm tra xác thực người dùng khi component được mount
 	useEffect(() => {
 		if (!isAuthenticated()) {
 			navigate('/login');
@@ -31,7 +31,7 @@ const FindBookingPage = () => {
 		}
 	}, [navigate]);
 
-	// Load all bookings on mount
+	// Tải tất cả đặt phòng của người dùng khi component được mount
 	useEffect(() => {
 		const loadAllBookings = async () => {
 			setInitialLoading(true);
@@ -41,7 +41,7 @@ const FindBookingPage = () => {
 				// API returns { status, message, data: [bookings] }
 				const bookings = response.data || [];
 				
-				// Sort by createAt - newest first
+				// Săp xếp đặt phòng theo ngày tạo giảm dần
 				const sorted = [...bookings].sort((a, b) => {
 					return new Date(b.createAt) - new Date(a.createAt);
 				});
@@ -49,7 +49,7 @@ const FindBookingPage = () => {
 				setAllBookings(sorted);
 				setFilteredBookings(sorted);
 			} catch (err) {
-				setError(err.message || 'Error loading bookings');
+				setError(err.message || 'Lỗi khi tải đặt phòng');
 				setAllBookings([]);
 				setFilteredBookings([]);
 			} finally {
@@ -60,7 +60,7 @@ const FindBookingPage = () => {
 		loadAllBookings();
 	}, []);
 
-	// Handle search by confirmation code
+	// Xử lý tìm kiếm theo mã đặt phòng
 	const handleSearch = async (e) => {
 		e.preventDefault();
 		
@@ -71,7 +71,7 @@ const FindBookingPage = () => {
 		setHasSearched(true);
 
 		if (!searchQuery.trim()) {
-			// If search is empty, show all bookings
+			// Nếu tìm kiếm trống, hiển thị tất cả đặt phòng
 			setFilteredBookings(allBookings);
 			setSearchStatus('');
 			setHasSearched(false);
@@ -92,7 +92,7 @@ const FindBookingPage = () => {
 				setSearchStatus('not-found');
 			}
 		} catch (err) {
-			setError(err.message || 'Error searching for booking');
+			setError(err.message || 'Lỗi khi tìm đặt phòng');
 			setFilteredBookings([]);
 			setSearchStatus('not-found');
 		} finally {
@@ -100,7 +100,7 @@ const FindBookingPage = () => {
 		}
 	};
 
-	// Handle clear search
+	// Xu lý làm mới tìm kiếm
 	const handleClearSearch = () => {
 		setSearchQuery('');
 		setFilteredBookings(allBookings);
@@ -110,17 +110,17 @@ const FindBookingPage = () => {
 		setSelectedBooking(null);
 	};
 
-	// Handle view details
+	// Xử lý xem chi tiết đặt phòng
 	const handleViewDetails = (booking) => {
 		setSelectedBooking(booking);
 	};
 
-	// Handle close details
+	// Xử lý đóng chi tiết đặt phòng
 	const handleCloseDetails = () => {
 		setSelectedBooking(null);
 	};
 
-	// Handle cancel booking - open reason form
+	// Xử lý hủy đặt phòng - mở modal lý do
 	const handleCancelBooking = (booking) => {
 		setBookingToCancelId(booking.id);
 		setBookingToCancelRef(booking.bookingReference);
@@ -128,12 +128,12 @@ const FindBookingPage = () => {
 		setShowCancelModal(true);
 	};
 
-	// Handle reason change
+	// Xử lý thay đổi lý do hủy
 	const handleCancelReasonChange = (e) => {
 		setCancelReason(e.target.value);
 	};
 
-	// Handle confirm cancel - show confirmation dialog
+	// Xu lý xác nhận hủy đặt phòng - mở hộp thoại xác nhận
 	const handleConfirmCancel = () => {
 		if (!cancelReason.trim()) {
 			alert('Vui lòng nhập lý do hủy phòng');
@@ -142,7 +142,7 @@ const FindBookingPage = () => {
 		setShowConfirmCancel(true);
 	};
 
-	// Handle cancel confirmation - call API
+	// Xử lý xác nhận hủy đặt phòng - gọi API
 	const handleCancelConfirmation = async () => {
 		console.log('[DEBUG] handleCancelConfirmation - bookingToCancelId:', bookingToCancelId, 'cancelReason:', cancelReason);
 		if (!bookingToCancelId) {
@@ -152,7 +152,7 @@ const FindBookingPage = () => {
 		setCancelling(true);
 		try {
 			await cancelBooking(bookingToCancelId, cancelReason);
-			// Update bookings list
+			// Cập nhật lại danh sách đặt phòng
 			const updatedBookings = allBookings.map(b => 
 				b.id === bookingToCancelId ? { ...b, status: 'CANCELLED', cancelReason } : b
 			);
@@ -160,7 +160,7 @@ const FindBookingPage = () => {
 			setFilteredBookings(updatedBookings.filter(b => 
 				!searchQuery || b.bookingReference.includes(searchQuery)
 			));
-			// Close modals and show success
+			// Đóng form và hiển thị thành công
 			setShowConfirmCancel(false);
 			setShowCancelModal(false);
 			setSelectedBooking(null);
@@ -175,38 +175,32 @@ const FindBookingPage = () => {
 		}
 	};
 
-	// Handle cancel booking (placeholder)
-	const handleCancelBookingOld = (booking) => {
-		// TODO: Implement cancel booking functionality
-		alert(`Cancel booking functionality coming soon for: ${booking.bookingReference}`);
-	};
-
-	// Handle login confirm
+	// Xử lý xác nhận đăng nhập và chuyển đến trang đăng nhập 
 	const handleLoginConfirm = () => {
 		setShowLoginModal(false);
 		navigate('/login');
 	};
 
-	// Login Modal Component
+	// Modal yêu cầu đăng nhập
 	const LoginModal = () => (
 		<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 			<div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-				<h2 className="text-xl font-bold mb-4">Login Required</h2>
+				<h2 className="text-xl font-bold mb-4">Cần đăng nhập</h2>
 				<p className="text-gray-700 mb-6">
-					You need to log in or create an account to view your bookings. Would you like to proceed to the login page?
+					Bạn cần đăng nhập hoặc tạo tài khoản để xem các đặt phòng của mình. Bạn có muốn chuyển sang trang đăng nhập không?
 				</p>
 				<div className="flex space-x-3">
 					<button
 						onClick={() => navigate('/hotels')}
 						className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors"
 					>
-						Cancel
+						Hủy
 					</button>
 					<button
 						onClick={handleLoginConfirm}
 						className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
 					>
-						OK
+						Đồng ý
 					</button>
 				</div>
 			</div>
@@ -222,7 +216,7 @@ const FindBookingPage = () => {
           <p className="text-gray-600">Xem tất cả các đặt phòng của bạn hoặc tìm kiếm theo mã xác nhận</p>
         </div>
 
-        {/* Search Bar */}
+        {/* Thanh Search */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
             <input
@@ -249,28 +243,28 @@ const FindBookingPage = () => {
               </button>
             )}
           </form>
-        </div>				{/* Search Status Message */}
-				{hasSearched && searchStatus && (
-					<div className={`mb-6 p-4 rounded-lg border ${
-						searchStatus === 'success'
-							? 'bg-green-50 border-green-200 text-green-800'
-							: 'bg-orange-50 border-orange-200 text-orange-800'
-					}`}>
-						{searchStatus === 'success' ? (
-							<div className="flex items-center space-x-2">
-								<span className="text-2xl">✓</span>
-								<span className="font-semibold">Tìm thấy đặt phòng!</span>
-							</div>
-						) : (
-							<div className="flex items-center space-x-2">
-								<span className="text-2xl">✗</span>
-								<span className="font-semibold">Không tìm thấy đặt phòng với mã xác nhận này</span>
-							</div>
-						)}
-					</div>
-				)}
+        </div>
+			{hasSearched && searchStatus && (
+				<div className={`mb-6 p-4 rounded-lg border ${
+					searchStatus === 'success'
+						? 'bg-green-50 border-green-200 text-green-800'
+						: 'bg-orange-50 border-orange-200 text-orange-800'
+				}`}>
+					{searchStatus === 'success' ? (
+						<div className="flex items-center space-x-2">
+							<span className="text-2xl">✓</span>
+							<span className="font-semibold">Tìm thấy đặt phòng!</span>
+						</div>
+					) : (
+						<div className="flex items-center space-x-2">
+							<span className="text-2xl">✗</span>
+							<span className="font-semibold">Không tìm thấy đặt phòng với mã xác nhận này</span>
+						</div>
+					)}
+				</div>
+			)}
 
-				{/* Error Message */}
+				{/* Thông báo lỗi */}
 				{error && (
 					<div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
 						<div className="flex items-center space-x-2">
@@ -280,14 +274,14 @@ const FindBookingPage = () => {
 					</div>
 				)}
 
-				{/* Loading State */}
+				{/* Trạng thái đang tải */}
 				{initialLoading && (
 					<div className="bg-white rounded-lg shadow p-12 text-center">
 						<p className="text-gray-600">Đang tải các đặt phòng của bạn...</p>
 					</div>
 				)}
 
-				{/* Booking Details Modal/View */}
+				{/* Modal chi tiết đặt phòng */}
 				{selectedBooking && (
 					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
 						<div className="bg-white rounded-lg shadow-lg max-w-2xl w-full my-8">
@@ -307,7 +301,7 @@ const FindBookingPage = () => {
 
 							{/* Body */}
 							<div className="p-6 space-y-6 max-h-96 overflow-y-auto">
-								{/* Customer Information */}
+								{/* Thông tin khách hàng */}
 								<div className="border-b pb-4">
 									<h3 className="text-lg font-bold mb-3">Thông tin khách hàng</h3>
 									<div className="grid grid-cols-2 gap-4 text-sm">
@@ -338,7 +332,7 @@ const FindBookingPage = () => {
 									</div>
 								</div>
 
-								{/* Stay Dates */}
+								{/* Số ngày lưu trú */}
 								<div className="border-b pb-4">
 									<h3 className="text-lg font-bold mb-3">Ngày lưu trú</h3>
 									<div className="grid grid-cols-3 gap-4 text-sm">
@@ -359,7 +353,7 @@ const FindBookingPage = () => {
 									</div>
 								</div>
 
-								{/* Guests */}
+								{/* Thông tin chi tiết đặt phòng */}
 								<div className="border-b pb-4">
 									<h3 className="text-lg font-bold mb-3">Khách</h3>
 									<div className="grid grid-cols-2 gap-4 text-sm">
@@ -374,7 +368,7 @@ const FindBookingPage = () => {
 									</div>
 								</div>
 
-								{/* Special Requests */}
+								{/* Yêu cầu dặt biệt */}
 								{selectedBooking.specialRequire && (
 									<div className="border-b pb-4">
 										<h3 className="text-lg font-bold mb-2">Yêu cầu đặc biệt</h3>
@@ -382,7 +376,7 @@ const FindBookingPage = () => {
 									</div>
 								)}
 
-								{/* Cancel Reason (for CANCELLED bookings) */}
+								{/* Lý do hủy đặt phòng (CANCELED) */}
 								{selectedBooking.status === 'CANCELLED' && selectedBooking.cancelReason && (
 									<div className="border-b pb-4">
 										<h3 className="text-lg font-bold mb-2">Lý do hủy</h3>
@@ -390,7 +384,7 @@ const FindBookingPage = () => {
 									</div>
 								)}
 
-								{/* Price */}
+								{/* Tổng tiền */}
 								<div className="bg-blue-50 p-3 rounded">
 									<div className="flex justify-between text-sm">
 										<span className="text-gray-700 font-semibold">Tổng tiền:</span>
@@ -399,7 +393,7 @@ const FindBookingPage = () => {
 								</div>
 							</div>
 
-							{/* Footer Buttons */}
+							{/* Thêm lực chọn */}
 							<div className="p-6 border-t bg-gray-50 flex gap-3">
 								<button
 									onClick={handleCloseDetails}
@@ -429,7 +423,7 @@ const FindBookingPage = () => {
 					</div>
 				)}
 
-				{/* Cancel Reason Form Modal */}
+				{/* Form lý do hủy đặt phòng */}
 				{showCancelModal && (
 					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
 						<div className="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -472,7 +466,7 @@ const FindBookingPage = () => {
 					</div>
 				)}
 
-				{/* Confirmation Dialog Modal */}
+				{/* Form xác nhận hủy đặt phòng */}
 				{showConfirmCancel && (
 					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
 						<div className="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -513,13 +507,13 @@ const FindBookingPage = () => {
 							<div key={booking.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
 								<div className="p-6">
 									<div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-										{/* Booking Reference */}
+										{/* Mã xác nhận đặt phòng (mã đặt phòng) */}
 										<div>
 											<p className="text-sm text-gray-600 font-semibold">Mã xác nhận</p>
 											<p className="text-lg font-mono font-bold text-blue-600">{booking.bookingReference}</p>
 										</div>
 
-										{/* Check-in / Check-out */}
+										{/* Nhận phòng / Trả phòng */}
 										<div>
 											<p className="text-sm text-gray-600 font-semibold">Ngày lưu trú</p>
 											<p className="text-lg font-medium">
@@ -528,7 +522,7 @@ const FindBookingPage = () => {
 											</p>
 										</div>
 
-										{/* Guests */}
+										{/* Thông tin khách hàng */}
 										<div>
 											<p className="text-sm text-gray-600 font-semibold">Khách</p>
 											<p className="text-lg font-medium">
@@ -536,7 +530,7 @@ const FindBookingPage = () => {
 											</p>
 										</div>
 
-										{/* Status */}
+										{/* Trạng thái đặt phòng */}
 										<div>
 											<p className="text-sm text-gray-600 font-semibold">Trạng thái</p>
 											<span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
@@ -551,7 +545,7 @@ const FindBookingPage = () => {
 										</div>
 									</div>
 
-									{/* Price and Buttons */}
+									{/* Giá và các lựa chọn khác */}
 									<div className="flex justify-between items-center pt-4 border-t">
 										<div>
 											<p className="text-sm text-gray-600 font-semibold">Tổng tiền</p>

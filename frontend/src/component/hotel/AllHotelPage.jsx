@@ -10,7 +10,7 @@ const AllHotelPage = () => {
   const navigate = useNavigate();
   const [searchLoading, setSearchLoading] = useState(false);
   
-  // Filter state
+  // Trạng thái bộ lọc
   const [filters, setFilters] = useState({
     location: '',
     checkInDate: '',
@@ -42,7 +42,7 @@ const AllHotelPage = () => {
   const [imageIndexMap, setImageIndexMap] = useState({});
 
   useEffect(() => {
-    // initialize index map for hotels loaded
+    // Khởi tạo bản đồ chỉ số ảnh cho carousel khi tải khách sạn
     const map = {};
     (hotels || []).forEach(h => {
       map[h.id] = map[h.id] ?? 0;
@@ -69,11 +69,11 @@ const AllHotelPage = () => {
   };
 
   const handleViewRooms = async (hotel) => {
-    // Fetch rooms for this hotel from the dedicated endpoint
+    // Lấy danh sách phòng của khách sạn và chuyển hướng đến trang AllRoomPage
     try {
       const res = await getRoomsByHotel(hotel.id);
       const rooms = res.data || [];
-      // Navigate to AllRoomPage with rooms, hotelId, and hotel info
+      // chuyển hướng đến trang AllRoomPage với danh sách phòng, mã khách sạn và thông tin khách sạn
       navigate('/rooms', { 
         state: { 
           rooms: rooms, 
@@ -92,15 +92,25 @@ const AllHotelPage = () => {
     navigate(`/hotel/${hotelId}`);
   };
 
-  // Handle filter input change
+  // Xử lý thay đổi bộ lọc
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+    // Nếu người dùng thay đổi ngày và đã có lỗi trước đó, xoá lỗi
+    if ((name === 'checkInDate' || name === 'checkOutDate') && value) {
+      setError(null);
+    }
   };
 
-  // Handle search
+  // Xử lý tìm kiếm
   const handleSearch = async (e) => {
     e.preventDefault();
+    // Bắt buộc phải chọn cả ngày nhận và ngày trả
+    if (!filters.checkInDate || !filters.checkOutDate) {
+      setError('Vui lòng chọn ngày nhận phòng và ngày trả phòng');
+      return;
+    }
+
     setSearchLoading(true);
     setError(null);
     try {
@@ -108,13 +118,13 @@ const AllHotelPage = () => {
       setHotels(res.data || []);
       setHasSearched(true);
     } catch (err) {
-      setError(err.message || 'Error searching hotels');
+      setError(err.message || 'Lỗi khi tìm khách sạn');
       setHotels([]);
     }
     setSearchLoading(false);
   };
 
-  // Handle clear filters
+  // Xư lý xóa bộ lọc
   const handleClearFilters = async () => {
     setFilters({
       location: '',
@@ -142,7 +152,7 @@ const AllHotelPage = () => {
         <h1 className="text-3xl font-bold mb-2">Khách sạn</h1>
         <p className="text-gray-600 mb-6">Duyệt danh sách khách sạn có phòng trống</p>
 
-        {/* Search Filter Bar */}
+        {/* Thanh lọc/tìm kiếm khách sạn */}
         <form onSubmit={handleSearch} className="bg-white p-6 rounded shadow mb-6">
           <h3 className="text-lg font-semibold mb-4">Tìm kiếm khách sạn</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
@@ -153,7 +163,7 @@ const AllHotelPage = () => {
                 name="location" 
                 value={filters.location}
                 onChange={handleFilterChange}
-                placeholder="e.g. Hà Nội"
+                placeholder="VD: Hà Nội"
                 className="w-full p-2 border rounded"
               />
             </div>
@@ -184,7 +194,7 @@ const AllHotelPage = () => {
                 name="capacity" 
                 value={filters.capacity}
                 onChange={handleFilterChange}
-                placeholder="e.g. 2"
+                placeholder="VD: 2"
                 className="w-full p-2 border rounded"
               />
             </div>
@@ -195,7 +205,7 @@ const AllHotelPage = () => {
                 name="roomQuantity" 
                 value={filters.roomQuantity}
                 onChange={handleFilterChange}
-                placeholder="e.g. 1"
+                placeholder="VD: 1"
                 className="w-full p-2 border rounded"
               />
             </div>
@@ -234,7 +244,7 @@ const AllHotelPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {hotels.map(hotel => (
               <div key={hotel.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                {/* Carousel area */}
+                {/* Khung trượt ảnh */}
                 <div className="relative bg-gray-100 h-48 md:h-56 overflow-hidden">
                   {hotel.images && hotel.images.length > 0 ? (
                     <>
@@ -244,7 +254,7 @@ const AllHotelPage = () => {
                         className="w-full h-full object-cover"
                       />
 
-                      {/* Left / Right controls */}
+                      {/* Nút trượt ảnh trái phải */}
                       {hotel.images.length > 1 && (
                         <>
                           <button onClick={() => prevImage(hotel.id)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-40 text-white rounded-full w-9 h-9 flex items-center justify-center hover:bg-opacity-60">
@@ -256,7 +266,7 @@ const AllHotelPage = () => {
                         </>
                       )}
 
-                      {/* Dots */}
+                      {/* Nút danh sách ảnh trượt */}
                       {hotel.images.length > 1 && (
                         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2">
                           {hotel.images.map((_, idx) => (
@@ -266,7 +276,7 @@ const AllHotelPage = () => {
                       )}
                     </>
                   ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400">No images available</div>
+                    <div className="flex items-center justify-center h-full text-gray-400">Không có ảnh</div>
                   )}
                 </div>
 

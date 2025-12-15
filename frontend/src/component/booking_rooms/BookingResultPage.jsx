@@ -7,18 +7,18 @@ const BookingResultPage = () => {
   const navigate = useNavigate();
   const booking = location.state?.booking;
 
-  // If no booking data, redirect back
+  // Nếu không có dữ liệu đặt phòng, chuyển hướng / hiển thị thông báo
   if (!booking) {
     return (
       <div className="bg-gray-100 min-h-screen">
         <main className="container mx-auto p-6 mt-20">
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600 mb-4">No booking information found</p>
+            <p className="text-gray-600 mb-4">Không tìm thấy thông tin đặt phòng</p>
             <button
               onClick={() => navigate('/hotels')}
               className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              Browse Hotels
+              Xem khách sạn
             </button>
           </div>
         </main>
@@ -30,7 +30,7 @@ const BookingResultPage = () => {
   return (
     <div className="bg-gray-100 min-h-screen">
       <main className="container mx-auto p-6 mt-20">
-        {/* Success Message */}
+        {/* Thông báo đặt phòng thành công */}
         <div className="mb-6 p-6 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center space-x-3">
             <div className="text-4xl text-green-600">✓</div>
@@ -41,9 +41,9 @@ const BookingResultPage = () => {
           </div>
         </div>
 
-        {/* Booking Details Card */}
+        {/* Card chi tiết đặt phòng */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Header */}
+          {/* Card's Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -65,9 +65,9 @@ const BookingResultPage = () => {
             </div>
           </div>
 
-          {/* Body */}
+          {/* Card's Body */}
           <div className="p-6 space-y-6">
-            {/* Room Information */}
+            {/* Thông tin phòng */}
             <div className="border-b pb-6">
               <h2 className="text-2xl font-bold mb-4">Thông tin phòng</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -94,7 +94,7 @@ const BookingResultPage = () => {
               </div>
             </div>
 
-            {/* Stay Dates */}
+            {/* Ngày lưu trú */}
             <div className="border-b pb-6">
               <h2 className="text-2xl font-bold mb-4">Ngày lưu trú</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -125,7 +125,7 @@ const BookingResultPage = () => {
               </div>
             </div>
 
-            {/* Guests */}
+            {/* Thông tin khách hàng */}
             <div className="border-b pb-6">
               <h2 className="text-2xl font-bold mb-4">Khách</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -140,7 +140,7 @@ const BookingResultPage = () => {
               </div>
             </div>
 
-            {/* Special Requests */}
+            {/* Yêu cầu đặt biệt */}
             {booking.specialRequire && (
               <div className="border-b pb-6">
                 <h2 className="text-2xl font-bold mb-4">Yêu cầu đặc biệt</h2>
@@ -150,7 +150,7 @@ const BookingResultPage = () => {
               </div>
             )}
 
-            {/* Price Breakdown */}
+            {/* Chi tiết tổng giá */}
             <div className="bg-blue-50 p-6 rounded-lg">
               <h2 className="text-2xl font-bold mb-4">Chi tiết giá</h2>
               <div className="space-y-2">
@@ -173,7 +173,7 @@ const BookingResultPage = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Các nút lựa chọn */}
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-6">
               <button
                 onClick={() => navigate('/find-booking')}
@@ -197,7 +197,7 @@ const BookingResultPage = () => {
           </div>
         </div>
 
-        {/* Important Info Box */}
+        {/* Thông tin quan trọng cần lưu ý, lưu mã đặt phòng */}
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-yellow-800">
             <span className="font-semibold">✓ Lưu ý:</span> Vui lòng lưu mã xác nhận <span className="font-mono font-bold">{booking.bookingReference}</span> để sử dụng sau. Bạn có thể dùng nó để tìm kiếm đặt phòng của mình bất kỳ lúc nào.

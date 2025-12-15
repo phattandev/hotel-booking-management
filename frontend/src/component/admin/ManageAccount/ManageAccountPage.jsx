@@ -9,11 +9,11 @@ const ManageAccountPage = () => {
   const [error, setError] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const [selectedUserAction, setSelectedUserAction] = useState(null); // 'lock' or 'unlock'
+  const [selectedUserAction, setSelectedUserAction] = useState(null); // Khóa hoặc mở khóa
   const [selectedUserInfo, setSelectedUserInfo] = useState(null); // Store user info for modal
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Fetch users from API
+  // Lấy danh sách users
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
@@ -36,15 +36,15 @@ const ManageAccountPage = () => {
     // eslint-disable-next-line
   }, []);
 
-  // Lock/unlock user status
+  // Khóa hoặc mở khóa user
   const handleToggleStatus = async (user, action) => {
     setSelectedUserId(user.id);
-    setSelectedUserAction(action); // 'lock' or 'unlock'
+    setSelectedUserAction(action); // Khóa hoặc mở khóa
     setSelectedUserInfo(user);
     setShowConfirmModal(true);
   };
 
-  // Confirm lock/unlock
+  // xác nhận khóa/mở khóa
   const handleConfirmToggle = async () => {
     setActionLoading(true);
     setError(null);
@@ -88,7 +88,7 @@ const ManageAccountPage = () => {
         </div>
       )}
 
-      {/* Users List */}
+      {/* Danh sách người dùng */}
       <div className="bg-white rounded shadow overflow-hidden">
         {loading ? (
           <div className="p-4">Đang tải...</div>
@@ -144,7 +144,7 @@ const ManageAccountPage = () => {
         )}
       </div>
 
-      {/* Confirm Modal for Lock/Unlock */}
+      {/* Form xác nhận cho khóa/mở khóa tài khoản */}
       {showConfirmModal && selectedUserInfo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">

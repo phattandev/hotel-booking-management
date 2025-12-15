@@ -31,7 +31,7 @@ const LoginPage = () => {
             const userData = await loginUser(login);
             const role = userData.role ? userData.role.toUpperCase() : '';
             
-            // Redirect based on role - admin goes to admin dashboard, others to home
+            // Chuyển hướng theo vai trò - admin vào trang quản trị, người dùng khác về trang chủ
             if (role === 'ADMIN') {
                 navigate("/admin");
             } else {

@@ -23,7 +23,7 @@ const NavBar = () => {
   // Tự động đóng menu hamburger khi chuyển sang màn hình lớn hơn
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) { // 768px là breakpoint 'md' của Tailwind
+      if (window.innerWidth >= 768) { 
         setIsOpen(false);
       }
     };
@@ -31,7 +31,7 @@ const NavBar = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Subscribe to auth changes (login/logout) to update navbar in real-time
+  // Lắng nghe sự kiện xác thực để cập nhật trạng thái đăng nhập và vai trò người dùng
   useEffect(() => {
     const unsubscribe = authEventEmitter.subscribe(() => {
       console.log('[NavBar] Auth event triggered - updating state');
@@ -57,12 +57,9 @@ const NavBar = () => {
   return (
     <nav className="fixed top-0 left-0 w-full bg-green-800 p-4 shadow-lg z-50">
       <div className="container mx-auto flex items-center justify-between">
-        {/* Tên Website */}
         <NavLink to="/home" className="text-white text-2xl font-bold hover:text-green-300 transition-colors duration-200">
           Hotel Booking
         </NavLink>
-
-        {/* Nút Hamburger (chỉ hiển thị trên mobile) */}
         <div className="md:hidden">
           <button onClick={toggleMenu} className="text-white focus:outline-none">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

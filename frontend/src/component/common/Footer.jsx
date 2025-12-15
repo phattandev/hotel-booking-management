@@ -5,13 +5,11 @@ const Footer = () => {
     <footer className="bg-gray-900 text-gray-200">
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-          {/* Column 1: Project description */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-3">Ứng dụng đặt phòng trực tuyến</h3>
             <p className="text-sm text-gray-300">Một ứng dụng đặt phòng khách sạn đơn giản cho mục đích học tập. Tìm phòng, đặt phòng và quản lý đặt phòng một cách dễ dàng.</p>
           </div>
 
-          {/* Column 2: Developers */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-3">Sinh viên thực hiện</h3>
             <ul className="text-sm text-gray-300 space-y-2">
@@ -20,7 +18,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 3: Contact */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-3">Liên hệ và hỗ trợ</h3>
             <ul className="text-sm text-gray-300 space-y-2">
@@ -32,20 +29,19 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 4: Quick links / Newsletter */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-3">Quick Links</h3>
             <ul className="text-sm text-gray-300 space-y-2">
-              <li><a href="/home" className="text-green-300 hover:underline">Home</a></li>
-              <li><a href="/rooms" className="text-green-300 hover:underline">Rooms</a></li>
-              <li><a href="/find-booking" className="text-green-300 hover:underline">Find Booking</a></li>
-              <li><a href="/login" className="text-green-300 hover:underline">Login</a></li>
+              <li><a href="/home" className="text-green-300 hover:underline">Trang chủ  </a></li>
+              <li><a href="/find-booking" className="text-green-300 hover:underline">Tìm kiếm đặt phòng</a></li>
+              <li><a href="/login" className="text-green-300 hover:underline">Đăng nhập</a></li>
+              <li><a href="/register" className="text-green-300 hover:underline">Đăng ký</a></li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-6 text-center text-sm text-gray-400">
-          © {new Date().getFullYear()} Hotel Booking. All rights reserved.
+          © {new Date().getFullYear()} Hotel Booking.
         </div>
       </div>
     </footer>

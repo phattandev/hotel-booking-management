@@ -31,15 +31,14 @@ function App() {
   return (
     <BrowserRouter>
       <NavBar />
-      {/* Add padding-top to prevent content from being hidden behind the fixed navbar */}
       <div className="App pt[70px]">
         <Routes>
-            {/* Route for homepage and login */}
+            {/* Route cho trang chủ và login */}
             <Route exact path="/" element={<LoginPage />} />
             <Route exact path="/login" element={<LoginPage />} />
             <Route exact path="/register" element={<RegisterPage />} />
             <Route exact path="/home" element={<HomePage />} />
-            {/* Public pages */}
+            {/* Trang công khai (tất cả người dùng) */}
             <Route exact path="/rooms" element={<AllRoomPage />} />
             <Route exact path="/room/:id" element={<RoomDetailPage />} />
             <Route exact path="/hotels" element={<AllHotelPage />} />
@@ -47,7 +46,7 @@ function App() {
             <Route exact path="/booking-result" element={<BookingResultPage />} />
             <Route exact path="/find-booking" element={<FindBookingPage />} />
 
-            {/* Admin pages (protected) */}
+            {/* Trang admin (protected) */}
             <Route exact path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
             <Route exact path="/admin/manage-rooms" element={<ProtectedRoute><ManageRoomPage /></ProtectedRoute>} />
             <Route exact path="/admin/add-room" element={<ProtectedRoute><AddRoomPage /></ProtectedRoute>} />

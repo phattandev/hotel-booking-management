@@ -9,9 +9,9 @@ const HotelDetailPage = () => {
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // carousel index map for rooms
+  // Bản đồ chỉ số carousel cho ảnh phòng
   const [roomImageIndexMap, setRoomImageIndexMap] = useState({});
-  // hotel images carousel index
+  // Chỉ số carousel ảnh khách sạn
   const [hotelImgIdx, setHotelImgIdx] = useState(0);
 
   useEffect(() => {
@@ -23,19 +23,19 @@ const HotelDetailPage = () => {
         const hotels = res.data || [];
         const found = hotels.find(h => String(h.id) === String(id));
         if (!found) {
-          setError('Hotel not found');
+          setError('Không tìm thấy khách sạn');
         } else {
           setHotel(found);
         }
       } catch (err) {
-        setError(err.message || 'Error fetching hotel');
+        setError(err.message || 'Lỗi khi tải thông tin khách sạn');
       }
       setLoading(false);
     };
     fetchHotel();
   }, [id]);
 
-  // initialize room image index map when hotel data arrives
+  // Khởi tạo bản đồ chỉ số ảnh phòng khi dữ liệu khách sạn có sẵn
   useEffect(() => {
     if (hotel && hotel.rooms) {
       const map = {};
@@ -44,7 +44,7 @@ const HotelDetailPage = () => {
     }
   }, [hotel]);
 
-  // reset hotel image index when hotel images change
+  // Đặt lại chỉ số ảnh khách sạn khi danh sách ảnh thay đổi
   useEffect(() => {
     if (hotel && hotel.images && hotel.images.length > 0) {
       setHotelImgIdx(0);
@@ -67,7 +67,7 @@ const HotelDetailPage = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex flex-col md:flex-row md:space-x-6">
             <div className="md:flex-1">
-              {/* Hotel images carousel */}
+              {/* Carousel ảnh khách sạn */}
               <div className="relative bg-gray-200 rounded mb-4 overflow-hidden h-64 md:h-72">
                 {hotel.images && hotel.images.length > 0 ? (
                   <>
@@ -128,7 +128,7 @@ const HotelDetailPage = () => {
             </div>
           </div>
 
-          {/* Rooms list */}
+          {/* Danh sách phòng */}
           <div className="mt-6">
             <h2 className="text-xl font-semibold mb-3">Danh sách phòng</h2>
             {hotel.rooms && hotel.rooms.length > 0 ? (
@@ -138,7 +138,7 @@ const HotelDetailPage = () => {
                       const currentIndex = roomImageIndexMap[r.id] ?? 0;
                       return (
                         <div key={r.id} className="bg-white p-4 rounded shadow">
-                          {/* Room image carousel */}
+                          {/* Carousel ảnh phòng */}
                           <div className="relative bg-gray-200 h-36 mb-3 overflow-hidden">
                             {images.length > 0 ? (
                               <>
@@ -158,7 +158,7 @@ const HotelDetailPage = () => {
                                 )}
                               </>
                             ) : (
-                              <div className="flex items-center justify-center h-full text-gray-400">No image</div>
+                              <div className="flex items-center justify-center h-full text-gray-400">Không có ảnh</div>
                             )}
                           </div>
                           <div className="flex justify-between items-start mb-2">

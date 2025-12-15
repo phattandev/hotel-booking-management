@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import Footer from '../../common/Footer';
 import { getAllRooms, updateRoom, getAllAmenities, getRoomsByHotel } from '../../../service/ApiService';
 
 const EditRoomPage = () => {
@@ -31,7 +30,7 @@ const EditRoomPage = () => {
   const navigate = useNavigate();
   const comboRef = useRef();
 
-  // ref to close dropdown when clicking outside
+  // ref để đóng dropdown khi click ra ngoài
   useEffect(() => {
     const onDoc = (e) => {
       if (comboRef.current && !comboRef.current.contains(e.target)) {
@@ -46,8 +45,8 @@ const EditRoomPage = () => {
     let mounted = true;
     (async () => {
       try {
-  // Load amenities and show only room-level features for room edit form
-  const amenityRes = await getAllAmenities();
+    // Tải danh sách tiện nghi và chỉ hiển thị tiện nghi ở cấp phòng cho form chỉnh sửa phòng
+    const amenityRes = await getAllAmenities();
   const amenityList = amenityRes?.data ?? amenityRes ?? [];
   const arr = Array.isArray(amenityList) ? amenityList : [];
   if (mounted) setAmenityOptions(arr.filter(a => (a.type || '').toLowerCase().includes('room')));
@@ -74,7 +73,7 @@ const EditRoomPage = () => {
         }
       } catch (err) {
         if (mounted) {
-          setError(err.message || 'Error loading room data');
+          setError(err.message || 'Lỗi khi tải dữ liệu phòng');
         }
       } finally {
         if (mounted) setLoading(false);
@@ -85,7 +84,7 @@ const EditRoomPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Parse numeric fields
+  // Phân tích các trường số
     let parsedValue = value;
     if (['price'].includes(name) && value) {
       parsedValue = parseFloat(value);
@@ -99,7 +98,7 @@ const EditRoomPage = () => {
     const file = e.target.files?.[0];
     if (file) {
       setForm({ ...form, photo: file });
-      // Preview image
+  // Xem trước ảnh
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result);
@@ -109,9 +108,9 @@ const EditRoomPage = () => {
   };
 
   const handleAddAmenity = () => {
-    // If an option is selected from dropdown, add the object
+    // Nếu chọn một tuỳ chọn từ dropdown, thêm object
     if (selectedAmenity && selectedAmenity.id != null) {
-      // avoid duplicates by id
+      // tránh trùng lặp id tiện nghi
       const exists = form.amenities.some(a => a && a.id === selectedAmenity.id);
       if (!exists) {
         setForm({ ...form, amenities: [...form.amenities, selectedAmenity] });
@@ -122,7 +121,7 @@ const EditRoomPage = () => {
       return;
     }
 
-    // fallback: add as free-text string (keeps previous behavior)
+    // Dự phòng: thêm chuỗi văn bản tự do (giữ hành vi trước đó)
     if (amenityInput.trim()) {
       setForm({ ...form, amenities: [...form.amenities, amenityInput.trim()] });
       setAmenityInput('');
@@ -147,26 +146,26 @@ const EditRoomPage = () => {
     setError(null);
     setSuccess(null);
 
-    // Validation
+    // Xác thực các trường bắt buộc
     if (!form.name || !form.price || !form.capacity || !form.amount) {
       const missingFields = [];
-      if (!form.name) missingFields.push('Name');
-      if (!form.price) missingFields.push('Price');
-      if (!form.capacity) missingFields.push('Capacity');
-      if (!form.amount) missingFields.push('Amount');
-      setError(`Missing required fields: ${missingFields.join(', ')}`);
+      if (!form.name) missingFields.push('Tên phòng');
+      if (!form.price) missingFields.push('Giá');
+      if (!form.capacity) missingFields.push('Sức chứa');
+      if (!form.amount) missingFields.push('Số lượng');
+      setError(`Thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
       return;
     }
 
     // Backend yêu cầu description không được blank
     if (!form.description || form.description.trim() === '') {
-      setError('Description is required and cannot be blank');
+      setError('Mô tả là bắt buộc và không được để trống');
       return;
     }
 
     setSubmitting(true);
     try {
-      // Extract amenity IDs from amenity objects
+      // Trích xuất ID tiện nghi từ object tiện nghi
       const amenityIds = form.amenities.map(amenity => 
         (amenity && typeof amenity === 'object') ? amenity.id : null
       ).filter(id => id !== null);
@@ -185,10 +184,10 @@ const EditRoomPage = () => {
       console.log('[EditRoomPage] Sending roomData:', roomData);
       console.log('[EditRoomPage] Photo file:', form.photo);
       await updateRoom(id, roomData);
-      setSuccess('Room updated successfully! Refetching rooms...');
+      setSuccess('Cập nhật phòng thành công! Đang cập nhật danh sách phòng...');
       
-      // If opened from a hotel context, refetch rooms from server and go back
-      // with updated list
+      // Nếu mở từ trang quản lý khách sạn, lấy lại danh sách phòng từ server và quay lại
+      // với danh sách đã được cập nhật
       const redirectDelay = setTimeout(async () => {
         if (managedHotelId && hotelName) {
           try {
@@ -199,7 +198,7 @@ const EditRoomPage = () => {
             });
           } catch (e) {
             console.error('[EditRoomPage] Error refetching rooms:', e);
-            // fallback: navigate without rooms
+            // Phương án dự phòng: chuyển hướng mà không kèm danh sách phòng
             navigate('/admin/manage-rooms', { 
               state: { hotelId: managedHotelId, hotelName: hotelName } 
             });
@@ -211,98 +210,98 @@ const EditRoomPage = () => {
       return () => clearTimeout(redirectDelay);
     } catch (err) {
       console.error('[EditRoomPage] Error:', err);
-      setError(err.message || 'Error updating room');
+      setError(err.message || 'Lỗi khi cập nhật phòng');
     }
     setSubmitting(false);
   };
 
-  if (loading) return <div className="container mx-auto p-6 mt-20">Loading...</div>;
+  if (loading) return <div className="container mx-auto p-6 mt-20">Đang tải...</div>;
 
   return (
     <div className="container mx-auto p-6 mt-20">
-      <h1 className="text-2xl font-bold mb-2">Edit Room #{id}</h1>
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded">{error}</div>}
+  <h1 className="text-2xl font-bold mb-2">Chỉnh sửa phòng #{id}</h1>
+          {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded">{error}</div>}
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">{success}</div>}
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4 max-w-2xl">
         <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Room Name *</label>
+            <label className="block text-sm font-medium mb-1">Tên phòng *</label>
             <input 
               type="text"
               name="name" 
               value={form.name} 
               onChange={handleChange} 
               className="w-full p-2 border rounded"
-              placeholder="e.g. Deluxe Ocean View"
+                placeholder="ví dụ: Deluxe Ocean View"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
+          <label className="block text-sm font-medium mb-1">Mô tả</label>
           <textarea 
             name="description" 
             value={form.description} 
             onChange={handleChange} 
             className="w-full p-2 border rounded"
             rows="3"
-            placeholder="Room description"
+            placeholder="Mô tả phòng"
           />
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
-            <label className="block text-sm font-medium mb-1">Type *</label>
+            <label className="block text-sm font-medium mb-1">Loại *</label>
             <select 
               name="type" 
               value={form.type} 
               onChange={handleChange} 
               className="w-full p-2 border rounded"
             >
-              <option>SINGLE</option>
-              <option>DOUBLE</option>
-              <option>SUIT</option>
-              <option>TRIPLE</option>
+              <option value="SINGLE">Đơn</option>
+              <option value="DOUBLE">Đôi</option>
+              <option value="SUIT">Suite</option>
+              <option value="TRIPLE">Ba người</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Price *</label>
+            <label className="block text-sm font-medium mb-1">Giá *</label>
             <input 
               type="number"
               name="price" 
               value={form.price} 
               onChange={handleChange} 
               className="w-full p-2 border rounded"
-              placeholder="Price"
+              placeholder="Giá"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Capacity *</label>
+            <label className="block text-sm font-medium mb-1">Sức chứa *</label>
             <input 
               type="number"
               name="capacity" 
               value={form.capacity} 
               onChange={handleChange} 
               className="w-full p-2 border rounded"
-              placeholder="e.g. 2"
+              placeholder="ví dụ: 2"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Amount *</label>
+            <label className="block text-sm font-medium mb-1">Số lượng *</label>
             <input 
               type="number"
               name="amount" 
               value={form.amount} 
               onChange={handleChange} 
               className="w-full p-2 border rounded"
-              placeholder="e.g. 10"
+              placeholder="ví dụ: 10"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Photo</label>
+          <label className="block text-sm font-medium mb-1">Ảnh</label>
           <input 
             type="file" 
             name="photo" 
@@ -313,13 +312,13 @@ const EditRoomPage = () => {
           {photoPreview && (
             <div className="mt-3">
               <img src={photoPreview} alt="Preview" className="max-w-xs h-32 object-cover rounded" />
-              <p className="text-xs text-gray-500 mt-1">Current photo</p>
+              <p className="text-xs text-gray-500 mt-1">Ảnh hiện tại</p>
             </div>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Amenities (Tiện nghi)</label>
+          <label className="block text-sm font-medium mb-1">Tiện nghi</label>
           <div className="relative" ref={comboRef}>
             <div className="flex gap-2 mb-3">
               <input
@@ -328,7 +327,7 @@ const EditRoomPage = () => {
                 onChange={(e) => { setAmenityInput(e.target.value); setSelectedAmenity(null); setDropdownOpen(true); }}
                 onFocus={() => setDropdownOpen(true)}
                 onKeyPress={handleAmenityKeyPress}
-                placeholder="Search or select amenities"
+                placeholder="Tìm kiếm hoặc chọn tiện nghi"
                 className="flex-1 p-2 border rounded"
               />
               <button
@@ -336,7 +335,7 @@ const EditRoomPage = () => {
                 onClick={handleAddAmenity}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
-                Add
+                Thêm
               </button>
             </div>
 
@@ -344,7 +343,7 @@ const EditRoomPage = () => {
             {dropdownOpen && (
               <div className="absolute z-40 w-full bg-white border rounded shadow max-h-48 overflow-auto">
                 {amenityOptions.length === 0 ? (
-                  <div className="p-2 text-sm text-gray-500">No amenities available</div>
+                  <div className="p-2 text-sm text-gray-500">Không có tiện nghi nào</div>
                 ) : (
                   amenityOptions
                     .filter(a => !amenityInput || (a.name && a.name.toLowerCase().includes(amenityInput.toLowerCase())))
@@ -362,7 +361,7 @@ const EditRoomPage = () => {
             )}
           </div>
           
-          {/* Danh sách amenities đã thêm */}
+          {/* Danh sách tiện nghi đã thêm */}
           {form.amenities.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {form.amenities.map((amenity, index) => {
@@ -394,19 +393,18 @@ const EditRoomPage = () => {
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             disabled={submitting}
           >
-            Cancel
+            Hủy
           </button>
           <button 
             type="submit" 
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             disabled={submitting}
           >
-            {submitting ? 'Saving...' : 'Save Changes'}
+            {submitting ? 'Đang lưu...' : 'Lưu thay đổi'}
           </button>
         </div>
       </form>
 
-      <Footer />
     </div>
   );
 };

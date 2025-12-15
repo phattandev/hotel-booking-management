@@ -7,31 +7,31 @@ import { useLocation, useNavigate } from 'react-router-dom';
 		const [rooms, setRooms] = useState([]);
 		const location = useLocation();
 		const navigate = useNavigate();
-		// If rooms are passed via navigation state (e.g. from HotelDetail), use them
+		// Nếu danh sách phòng được truyền từ AllHotelPage (response có chứa danh sách phòng), dùng chúng
 		const roomsFromState = location.state?.rooms;
 		const hotelIdFromState = location.state?.hotelId;
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
+		const [loading, setLoading] = useState(true);
+		const [error, setError] = useState(null);
 
-	// Fetch rooms from API
+		// Lấy danh sách phòng từ API hoặc từ state
 		const fetchRooms = async () => {
 		setLoading(true);
 		setError(null);
 		try {
-				// If rooms were passed via state, use them (from AllHotelPage click)
+				// Nếu có danh sách phòng được truyền từ AllHotelPage, dùng danh sách đó
 				if (roomsFromState && Array.isArray(roomsFromState)) {
 					setRooms(roomsFromState);
 				} else if (hotelIdFromState) {
-					// Otherwise if hotelId provided, fetch from endpoint
+					// Nếu không được truyền, gọi API lấy phòng theo mã khách sạn
 					const res = await getRoomsByHotel(hotelIdFromState);
 					setRooms(res.data || []);
 				} else {
-					// Fallback: show error since we need either rooms or hotelId
+					// Hiển thị lỗi vì cần danh sách phòng hoặc mã khách sạn
 					setError('Không có thông tin khách sạn. Vui lòng chọn khách sạn từ danh sách.');
 					setRooms([]);
 				}
 		} catch (err) {
-			setError(err.message || 'Error fetching rooms');
+			setError(err.message || 'Lỗi khi tải phòng');
 			setRooms([]);
 		}
 		setLoading(false);
@@ -41,11 +41,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 		fetchRooms();
 	}, []);
 
-	// Carousel state for each room
+	// Trạng thái carousel (băng chuyền lướt ngang cho ảnh) cho mỗi phòng
 	const [roomImageIndexMap, setRoomImageIndexMap] = useState({});
 
 	useEffect(() => {
-		// initialize index map for rooms loaded
+		// Khởi tạo bản đồ chỉ mục cho các phòng đã tải
 		const map = {};
 		(rooms || []).forEach(r => {
 			map[r.id] = map[r.id] ?? 0;
@@ -53,6 +53,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 		setRoomImageIndexMap(prev => ({ ...map, ...prev }));
 	}, [rooms]);
 
+	// Nút chuyển ảnh phòng trước
 	const prevRoomImage = (roomId, images) => {
 		setRoomImageIndexMap(prev => {
 			const current = prev[roomId] ?? 0;
@@ -61,6 +62,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 		});
 	};
 
+	// Nút chuyển ảnh phòng sau
 	const nextRoomImage = (roomId, images) => {
 		setRoomImageIndexMap(prev => {
 			const current = prev[roomId] ?? 0;
@@ -88,7 +90,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 				) : (
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 						{rooms.map(room => {
-							// Compose images array for carousel
+							// Mảng soạn hình ảnh cho băng chuyền (carousel)
 							const images = room.roomImages && room.roomImages.length > 0
 								? room.roomImages
 								: (location.state?.hotelImages && location.state.hotelImages.length > 0
@@ -97,7 +99,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 							const currentIndex = roomImageIndexMap[room.id] ?? 0;
 							return (
 								<div key={room.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-									{/* Room Image Carousel */}
+									{/* Carousel ảnh phòng */}
 									<div className="relative bg-gray-200 h-48 overflow-hidden">
 										{images.length > 0 ? (
 											<>
@@ -128,7 +130,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 										</div>
 									</div>
 
-									{/* Room Details */}
+									{/* Thông tin phòng */}
 									<div className="p-4">
 										<h3 className="text-xl font-bold mb-2">{room.name}</h3>
 										<div className="mb-3 flex justify-between items-start">

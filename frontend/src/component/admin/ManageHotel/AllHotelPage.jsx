@@ -19,7 +19,7 @@ const AllHotelPage = () => {
       const list = res?.data ?? res ?? [];
       setHotels(Array.isArray(list) ? list : []);
     } catch (err) {
-      setError(err.message || 'Error fetching hotels');
+      setError(err.message || 'Lỗi tải danh sách khách sạn');
       setHotels([]);
     }
     setLoading(false);
@@ -45,7 +45,7 @@ const AllHotelPage = () => {
   };
 
   const handleManage = (hotel) => {
-    // show manage options modal (choose ManageRoom or ManageAmenity)
+    // hiển thị modal lựa chọn chức năng (Quản lý phòng hoặc Xem tiện nghi)
     setSelectedForManage(hotel);
     setShowManageModal(true);
   };
@@ -59,14 +59,11 @@ const AllHotelPage = () => {
 
   const openManageRooms = (hotel) => {
     setShowManageModal(false);
-    // Pass hotel's rooms array (if present) so ManageRoomPage can render without
-    // re-fetching and so we preserve the hotel<->room relation when room objects
-    // do not include hotelId fields.
     navigate('/admin/manage-rooms', { state: { hotelId: hotel.id, hotelName: hotel.name, rooms: hotel.rooms } });
   };
 
   const openManageAmenities = (hotel) => {
-    // Instead of navigating to global page, fetch and show this hotel's amenities
+    // Thay vì điều hướng đến trang chủ, tìm nạp và hiển thị các tiện nghi của khách sạn này
     setShowManageModal(false);
     viewHotelAmenities(hotel);
   };
@@ -78,19 +75,20 @@ const AllHotelPage = () => {
     setRoomAmenitiesList([]);
     setError(null);
     try {
-      // fetch hotel-level amenities
+      // Tìm kiếm các tiện nghi cấp khách sạn
       const hRes = await getHotelAmenitiesByHotel(hotel.id);
       const hList = hRes?.data ?? hRes ?? [];
-      // fetch room-level amenities grouped by room
+      // Tìm kiếm các tiện nghi cấp phòng được nhóm theo phòng
       const rRes = await getRoomAmenitiesByHotel(hotel.id);
       const rList = rRes?.data ?? rRes ?? [];
 
-      // flatten room amenities and deduplicate by id
+      // Làm gọn tiện nghi phòng và loại bỏ trùng lặp bằng ID
       const flat = [];
       for (const group of rList) {
         const arr = group?.amenities ?? [];
         for (const a of arr) {
-          if (!flat.find(x => x.id === a.id)) flat.push(a);
+          if (!flat.find(x => x.id === a.id)) 
+            flat.push(a);
         }
       }
 
@@ -105,7 +103,7 @@ const AllHotelPage = () => {
 
   const handleDeleteClick = () => {
     if (selectedIds.size === 0) { setMessage('Vui lòng chọn ít nhất một khách sạn để xóa.'); return; }
-    // Check if any selected hotel has rooms
+    // Kiểm tra xem có khách sạn nào được chọn có phòng không
     const problematic = hotels.filter(h => selectedIds.has(h.id) && Array.isArray(h.rooms) && h.rooms.length > 0);
     if (problematic.length > 0) {
       setError('Không thể xóa những khách sạn có phòng. Vui lòng bỏ chọn các khách sạn có phòng trước.');
