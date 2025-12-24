@@ -18,13 +18,25 @@ const authApi = axios.create({
 // Interceptor chỉ áp dụng cho `api`, không áp dụng cho `authApi`
 api.interceptors.request.use(config => {
     const token = localStorage.getItem("token");
-    if (token) {
+    // Guard against literal string 'null' which may be stored accidentally
+    if (token && token !== 'null') {
         config.headers.Authorization = `Bearer ${token}`;
+    } else {
+        // chắc chắn không gửi Authorization header nếu không có token
+        if (config.headers && config.headers.Authorization) delete config.headers.Authorization;
     }
     return config;
 }, error => {
     return Promise.reject(error);
 });
+
+// Chắc chắn không gửi Authorization header trong authApi
+authApi.interceptors.request.use(config => {
+    if (config.headers && config.headers.Authorization) {
+        delete config.headers.Authorization;
+    }
+    return config;
+}, error => Promise.reject(error));
 
 /*
     Mô tả: Trả về headers mặc định dùng cho các request cần Authorization.
@@ -35,6 +47,8 @@ api.interceptors.request.use(config => {
 export const getHeader = () => {
     const token = localStorage.getItem("token");
     // Chỉ bao gồm Ủy quyền theo mặc định.
+    // Không trả Authorization nếu token absent or 'null'
+    if (!token || token === 'null') return {};
     return {
         Authorization: `Bearer ${token}`
     };
@@ -266,7 +280,8 @@ export async function deleteUser(userId) {
 */
 export async function getAllRooms() {
     try {
-        const result = await api.get("/api/v1/rooms/all");
+        // Public endpoint: use unauthenticated instance so guests can fetch rooms
+        const result = await authApi.get("/api/v1/rooms/all");
         const serverData = result.data;
         if (Array.isArray(serverData)) {
             return { status: 200, message: 'OK', data: serverData };
@@ -287,7 +302,8 @@ export async function getAllRooms() {
 */
 export async function getAllHotels() {
     try {
-        const res = await api.get('/api/v1/hotels/all');
+        // Public endpoint: use unauthenticated instance so guests can fetch hotels
+        const res = await authApi.get('/api/v1/hotels/all');
         return res.data;
     } catch (error) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách khách sạn.');
@@ -301,18 +317,37 @@ export async function getAllHotels() {
 */
 export async function getRoomsByHotel(hotelId) {
     try {
-        const res = await api.get(`/api/v1/hotels/${hotelId}/rooms`);
-        const serverData = res.data;
-        if (Array.isArray(serverData)) {
-            return { status: 200, message: 'OK', data: serverData };
+        // Try unauthenticated call first (guests)
+        try {
+            const res = await authApi.get(`/api/v1/hotels/${hotelId}/rooms`);
+            const serverData = res.data;
+            if (Array.isArray(serverData)) {
+                return { status: 200, message: 'OK', data: serverData };
+            }
+            if (serverData && Array.isArray(serverData.data)) {
+                return serverData;
+            }
+            const arr = serverData?.data ?? serverData ?? [];
+            return { status: 200, message: 'OK', data: Array.isArray(arr) ? arr : [] };
+        } catch (errUnauth) {
+            // If unauthenticated call fails (possible 401 or other), try authenticated instance as fallback
+            console.warn('[ApiService] authApi.get rooms failed, falling back to api.get with headers:', errUnauth?.message || errUnauth);
+            const res = await api.get(`/api/v1/hotels/${hotelId}/rooms`, { headers: getHeader() });
+            const serverData = res.data;
+            if (Array.isArray(serverData)) {
+                return { status: 200, message: 'OK', data: serverData };
+            }
+            if (serverData && Array.isArray(serverData.data)) {
+                return serverData;
+            }
+            const arr = serverData?.data ?? serverData ?? [];
+            return { status: 200, message: 'OK', data: Array.isArray(arr) ? arr : [] };
         }
-        if (serverData && Array.isArray(serverData.data)) {
-            return serverData;
-        }
-        const arr = serverData?.data ?? serverData ?? [];
-        return { status: 200, message: 'OK', data: Array.isArray(arr) ? arr : [] };
     } catch (error) {
-        throw new Error(error.response?.data?.message || `Lỗi khi lấy danh sách phòng theo mã khách sạn: ${hotelId}`);
+        // Surface more debugging info when possible
+        const msg = error?.response?.data?.message || error?.message || `Lỗi khi lấy danh sách phòng theo mã khách sạn: ${hotelId}`;
+        console.error('[ApiService] getRoomsByHotel final error:', error);
+        throw new Error(msg);
     }
 }
 
@@ -345,7 +380,8 @@ export async function searchHotels(filters) {
         if (filters.capacity) params.append('capacity', filters.capacity);
         if (filters.roomQuantity) params.append('roomQuantity', filters.roomQuantity);
         
-        const res = await api.get(`/api/v1/hotels/search?${params.toString()}`);
+        // Public search: use unauthenticated instance so guests can search hotels
+        const res = await authApi.get(`/api/v1/hotels/search?${params.toString()}`);
         const serverData = res.data;
         if (Array.isArray(serverData)) {
             return { status: 200, message: 'OK', data: serverData };

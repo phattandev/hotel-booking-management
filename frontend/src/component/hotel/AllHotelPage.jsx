@@ -71,20 +71,21 @@ const AllHotelPage = () => {
   const handleViewRooms = async (hotel) => {
     // Lấy danh sách phòng của khách sạn và chuyển hướng đến trang AllRoomPage
     try {
+      // Nếu danh sách phòng đã có sẵn trong object hotel (như ở HotelDetailPage), dùng luôn
+      if (hotel && Array.isArray(hotel.rooms) && hotel.rooms.length > 0) {
+        navigate('/rooms', { 
+          state: { rooms: hotel.rooms, hotelName: hotel.name, hotelId: hotel.id, hotelImages: hotel.images } 
+        });
+        return;
+      }
+
+      // Nếu không có, gọi API lấy phòng theo mã khách sạn (ApiService có fallback)
       const res = await getRoomsByHotel(hotel.id);
       const rooms = res.data || [];
-      // chuyển hướng đến trang AllRoomPage với danh sách phòng, mã khách sạn và thông tin khách sạn
-      navigate('/rooms', { 
-        state: { 
-          rooms: rooms, 
-          hotelName: hotel.name, 
-          hotelId: hotel.id, 
-          hotelImages: hotel.images 
-        } 
-      });
+      navigate('/rooms', { state: { rooms: rooms, hotelName: hotel.name, hotelId: hotel.id, hotelImages: hotel.images } });
     } catch (err) {
       console.error('Error fetching rooms for hotel:', err);
-      alert('Không thể tải phòng của khách sạn này. Vui lòng thử lại.');
+      alert(err.message || 'Không thể tải phòng của khách sạn này. Vui lòng thử lại.');
     }
   };
 
