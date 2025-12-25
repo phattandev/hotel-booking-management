@@ -347,7 +347,10 @@ export async function getRoomsByHotel(hotelId) {
         // Surface more debugging info when possible
         const msg = error?.response?.data?.message || error?.message || `Lỗi khi lấy danh sách phòng theo mã khách sạn: ${hotelId}`;
         console.error('[ApiService] getRoomsByHotel final error:', error);
-        throw new Error(msg);
+        // Attach HTTP status (if any) to the Error object so callers can react (e.g. 401 -> redirect to detail)
+        const e = new Error(msg);
+        e.status = error?.response?.status;
+        throw e;
     }
 }
 

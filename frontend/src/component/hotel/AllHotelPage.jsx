@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Footer from '../common/Footer';
-import { getAllHotels, getRoomsByHotel, searchHotels } from '../../service/ApiService';
+import { getAllHotels, getRoomsByHotel, getHotelById, searchHotels } from '../../service/ApiService';
 import { useNavigate } from 'react-router-dom';
 
 const AllHotelPage = () => {
@@ -79,12 +79,28 @@ const AllHotelPage = () => {
         return;
       }
 
-      // Nếu không có, gọi API lấy phòng theo mã khách sạn (ApiService có fallback)
+      // Nếu không có rooms embedded, lấy thông tin khách sạn qua getHotelById (dùng getAllHotels under the hood)
+      // getHotelById thường trả object { status: 200, data: hotelObject }
+      const hotelRes = await getHotelById(hotel.id);
+      const found = hotelRes?.data ?? null;
+      if (found && Array.isArray(found.rooms) && found.rooms.length > 0) {
+        navigate('/rooms', { state: { rooms: found.rooms, hotelName: found.name, hotelId: found.id, hotelImages: found.images } });
+        return;
+      }
+
+      // Nếu vẫn không có rooms embedded, gọi endpoint rooms (có thể yêu cầu auth)
       const res = await getRoomsByHotel(hotel.id);
       const rooms = res.data || [];
       navigate('/rooms', { state: { rooms: rooms, hotelName: hotel.name, hotelId: hotel.id, hotelImages: hotel.images } });
     } catch (err) {
       console.error('Error fetching rooms for hotel:', err);
+      // If the rooms endpoint is protected for this hotel (401), fall back to the hotel detail page
+      // where embedded rooms (if present) are shown. This gives guests a path to view rooms.
+      if (err && (err.status === 401 || (err.message && err.message.toLowerCase().includes('authentication')))) {
+        // Navigate to hotel detail as a graceful fallback
+        navigate(`/hotel/${hotel.id}`);
+        return;
+      }
       alert(err.message || 'Không thể tải phòng của khách sạn này. Vui lòng thử lại.');
     }
   };
